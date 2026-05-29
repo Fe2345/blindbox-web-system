@@ -40,8 +40,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('token')
-  if (!to.meta.noAuth && !token) {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  if (!to.meta.noAuth && !isLoggedIn) {
     next('/login')
   } else {
     next()

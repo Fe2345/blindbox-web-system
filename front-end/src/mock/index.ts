@@ -8,7 +8,6 @@ import {
   mockExchangeApplications,
   mockPointsRecords,
   mockTransactionRecords,
-  mockAddresses,
   mockMerchants,
   mockAdminUsers,
   mockProducts,
@@ -31,49 +30,10 @@ let mock: MockAdapter | null = null
 
 export function setupMock() {
   if (mock) return
-  mock = new MockAdapter(axios, { delayResponse: 300 })
+  mock = new MockAdapter(axios, { delayResponse: 300, onNoMatch: 'passthrough' })
 
   // ==================== User API ====================
-
-  // Auth
-  mock.onPost('/user/api/login').reply((config) => {
-    const { username, password } = JSON.parse(config.data)
-    if (username === 'admin' && password === '123456') {
-      return [200, { code: 0, data: { token: 'mock-token-001', user: { id: 'u001', username: '当前用户', phone: '13800138000', avatar: '', points: 930, status: 'active', createdAt: '2026-04-20' } }, message: 'ok' }]
-    }
-    return [200, { code: -1, data: null, message: '用户名或密码错误' }]
-  })
-
-  mock.onPost('/user/api/register').reply(() => {
-    return [200, { code: 0, data: null, message: '注册成功' }]
-  })
-
-  mock.onGet('/user/api/user/info').reply(() => {
-    return [200, { code: 0, data: { id: 'u001', username: '当前用户', phone: '13800138000', avatar: '', points: 930, status: 'active', createdAt: '2026-04-20' }, message: 'ok' }]
-  })
-
-  mock.onPut('/user/api/user/info').reply(() => {
-    return [200, { code: 0, data: null, message: '修改成功' }]
-  })
-
-  mock.onGet('/user/api/user/addresses').reply(() => {
-    return [200, { code: 0, data: mockAddresses, message: 'ok' }]
-  })
-
-  mock.onPost('/user/api/user/addresses').reply((config) => {
-    const addr = JSON.parse(config.data)
-    addr.id = 'addr' + Date.now()
-    mockAddresses.push(addr)
-    return [200, { code: 0, data: addr, message: '添加成功' }]
-  })
-
-  mock.onPut(/\/user\/api\/user\/addresses\/.*/).reply(() => {
-    return [200, { code: 0, data: null, message: '修改成功' }]
-  })
-
-  mock.onDelete(/\/user\/api\/user\/addresses\/.*/).reply(() => {
-    return [200, { code: 0, data: null, message: '删除成功' }]
-  })
+  // 用户相关接口（login/register/user/addresses）已接入真实后端，不再 mock
 
   // BlindBox
   mock.onGet('/user/api/blindboxes').reply(() => {

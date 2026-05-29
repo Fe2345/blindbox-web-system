@@ -2,7 +2,7 @@ import re
 
 from rest_framework import serializers
 
-from .models import Address, Division
+from .models import Address, Division, User
 
 
 class DivisionSerializer(serializers.ModelSerializer):
@@ -53,3 +53,24 @@ class AddressWriteSerializer(serializers.Serializer):
             if code not in found:
                 raise serializers.ValidationError(f"行政区划代码 {code} 不存在")
         return attrs
+
+
+class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150)
+    phone = serializers.CharField(max_length=11)
+    password = serializers.CharField(min_length=6, max_length=128)
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("用户名已存在")
+        return value
+
+    def validate_phone(self, value):
+        if not re.match(r"^1[3-9]\d{9}$", value):
+            raise serializers.ValidationError("请输入有效的 11 位手机号")
+        return value
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
