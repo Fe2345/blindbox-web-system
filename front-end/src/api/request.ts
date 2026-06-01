@@ -1,5 +1,6 @@
 import axios from 'axios'
 import router from '@/router'
+import { ElMessage } from 'element-plus'
 
 // Preserve the original HTTP adapter before any mock replaces it.
 // Uses a global to survive Vite HMR re-execution (which would otherwise
@@ -71,6 +72,8 @@ request.interceptors.response.use(
       }
     }
 
+    const msg = err.response?.data?.message || err.message || '请求失败'
+    ElMessage.error(msg)
     return Promise.reject(err)
   },
 )

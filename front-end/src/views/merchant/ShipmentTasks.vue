@@ -149,8 +149,6 @@ async function handleShip() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('发货失败')
   } finally {
     shipping.value = false
   }

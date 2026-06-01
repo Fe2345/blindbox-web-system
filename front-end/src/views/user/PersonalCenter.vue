@@ -167,8 +167,6 @@ async function handleSaveProfile() {
     const res = await userStore.updateUserInfo({ username: profileForm.username, phone: profileForm.phone })
     if (res.code === 200) ElMessage.success('保存成功')
     else ElMessage.error(res.message)
-  } catch {
-    ElMessage.error('保存失败')
   } finally {
     saving.value = false
   }
@@ -213,8 +211,6 @@ async function handleSaveAddress() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('操作失败')
   } finally {
     savingAddress.value = false
   }

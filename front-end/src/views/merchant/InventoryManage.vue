@@ -118,8 +118,6 @@ async function handleUpdate() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('更新失败')
   } finally {
     submitting.value = false
   }

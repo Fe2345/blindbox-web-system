@@ -89,8 +89,6 @@ async function handleSubmit() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('提交失败')
   } finally {
     loading.value = false
   }

@@ -82,8 +82,6 @@ async function handlePublish() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('发布失败')
   } finally {
     publishing.value = false
   }

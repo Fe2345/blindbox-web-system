@@ -49,8 +49,6 @@ async function handleLogin() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('登录失败')
   } finally {
     loading.value = false
   }

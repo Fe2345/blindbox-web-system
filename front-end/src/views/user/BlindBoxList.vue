@@ -10,7 +10,7 @@
       </el-select>
       <el-select v-model="filterStatus" placeholder="状态筛选" clearable style="width: 150px">
         <el-option label="进行中" value="active" />
-        <el-option label="库存不足" value="low_stock" />
+        <el-option label="已下架" value="inactive" />
         <el-option label="已结束" value="ended" />
       </el-select>
       <el-input v-model="searchKey" placeholder="搜索盲盒名称" prefix-icon="Search" style="width: 250px" clearable />
@@ -23,11 +23,11 @@
           <div class="card-title">{{ box.name }}</div>
           <div class="card-meta">分类：{{ box.category }}</div>
           <div class="card-meta">消耗积分：{{ box.costPoints }}</div>
-          <div class="card-meta">剩余库存：{{ box.stock }}</div>
+          <div class="card-meta">剩余库存：{{ box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) }}</div>
         </div>
         <div class="card-actions">
-          <el-tag :type="box.status === 'active' ? 'success' : box.status === 'low_stock' ? 'warning' : 'info'" size="small">
-            {{ box.status === 'active' ? '进行中' : box.status === 'low_stock' ? '库存不足' : '已结束' }}
+          <el-tag :type="box.status === 'active' ? 'success' : box.status === 'inactive' ? 'warning' : 'info'" size="small">
+            {{ box.status === 'active' ? '进行中' : box.status === 'inactive' ? '已下架' : '已结束' }}
           </el-tag>
           <el-button size="small" type="primary" @click.stop="router.push(`/blindbox/${box.id}`)">查看详情</el-button>
         </div>

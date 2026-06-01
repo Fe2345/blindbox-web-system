@@ -51,7 +51,8 @@ export function setupMock() {
     const id = config.url?.split('/')[3]
     const box = mockBlindBoxes.find((b) => b.id === id)
     if (!box) return [404, { code: -1, data: null, message: '盲盒不存在' }]
-    if (box.stock <= 0) return [200, { code: -1, data: null, message: '库存不足' }]
+    const totalRemaining = box.prizes.reduce((s, p) => s + p.remainingQuantity, 0)
+    if (totalRemaining <= 0) return [200, { code: -1, data: null, message: '库存不足' }]
     const rand = Math.random() * 100
     let cum = 0
     let prize = box.prizes[0]
@@ -59,7 +60,7 @@ export function setupMock() {
       cum += p.probability
       if (rand <= cum) { prize = p; break }
     }
-    box.stock--
+    prize.remainingQuantity--
     return [200, {
       code: 200,
       data: {
@@ -72,6 +73,9 @@ export function setupMock() {
         blindBoxName: box.name,
         costPoints: box.costPoints,
         remainingPoints: 930 - box.costPoints,
+        batchNo: 'BATCH' + Date.now(),
+        drawType: 'real',
+        drawStatus: 'success',
         drawTime: new Date().toISOString(),
       },
       message: 'ok',

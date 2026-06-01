@@ -76,8 +76,6 @@ async function handleSubmit() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('修改失败')
   } finally {
     loading.value = false
   }

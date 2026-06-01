@@ -67,11 +67,11 @@
           <div class="card-body">
             <div class="card-title">{{ box.name }}</div>
             <div class="card-meta">消耗积分：{{ box.costPoints }}</div>
-            <div class="card-meta">剩余库存：{{ box.stock }}</div>
+            <div class="card-meta">剩余库存：{{ box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) }}</div>
           </div>
           <div class="card-actions">
-            <el-tag :type="box.status === 'active' ? 'success' : box.status === 'low_stock' ? 'warning' : 'info'" size="small">
-              {{ box.status === 'active' ? '进行中' : box.status === 'low_stock' ? '库存不足' : '已结束' }}
+            <el-tag :type="box.status === 'active' ? 'success' : box.status === 'inactive' ? 'warning' : 'info'" size="small">
+              {{ box.status === 'active' ? '进行中' : box.status === 'inactive' ? '已下架' : '已结束' }}
             </el-tag>
           </div>
         </div>

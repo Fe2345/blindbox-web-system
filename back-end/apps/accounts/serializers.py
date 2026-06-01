@@ -2,6 +2,8 @@ import re
 
 from rest_framework import serializers
 
+from apps.common.utils import keys_to_camel, keys_to_snake
+
 from .models import Address, Division, User
 
 
@@ -27,6 +29,9 @@ class AddressSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def to_representation(self, instance):
+        return keys_to_camel(super().to_representation(instance))
+
 
 class AddressWriteSerializer(serializers.Serializer):
     """地址写入序列化器"""
@@ -39,6 +44,9 @@ class AddressWriteSerializer(serializers.Serializer):
     street = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
     detail = serializers.CharField(max_length=200)
     is_default = serializers.BooleanField(default=False)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
 
     def validate_receiver_phone(self, value):
         if not re.match(r"^1[3-9]\d{9}$", value):

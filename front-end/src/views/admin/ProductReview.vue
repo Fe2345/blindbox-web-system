@@ -57,7 +57,7 @@ async function handleReview() {
     const res = await productStore.review(target.value.id, action.value, note.value)
     if (res.code === 200) { ElMessage.success('审核完成'); dialogVisible.value = false }
     else ElMessage.error(res.message)
-  } catch { ElMessage.error('操作失败') } finally { submitting.value = false }
+  } finally { submitting.value = false }
 }
 
 onMounted(() => productStore.fetchList())
