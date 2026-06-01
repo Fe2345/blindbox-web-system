@@ -133,8 +133,6 @@ async function handleApply() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('申请失败')
   } finally {
     applying.value = false
   }

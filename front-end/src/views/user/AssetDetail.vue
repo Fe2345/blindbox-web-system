@@ -145,8 +145,6 @@ async function handleRecycle() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('回收失败')
   } finally {
     recycling.value = false
   }
@@ -179,8 +177,6 @@ async function handlePublishExchange() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('发布失败')
   } finally {
     publishing.value = false
   }

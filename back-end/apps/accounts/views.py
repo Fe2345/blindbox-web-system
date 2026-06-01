@@ -38,11 +38,11 @@ class AddressListView(APIView):
     def post(self, request):
         user = request.user
         if Address.objects.filter(user=user).count() >= 10:
-            return error(message="最多添加 10 个收货地址", code=400)
+            return error(message="最多添加 10 个收货地址", http_status=400)
 
         serializer = AddressWriteSerializer(data=request.data)
         if not serializer.is_valid():
-            return error(message=flatten_errors(serializer.errors), code=400)
+            return error(message=flatten_errors(serializer.errors), http_status=400)
 
         data = serializer.validated_data
         addr = Address.objects.create(
@@ -81,11 +81,11 @@ class AddressDetailView(APIView):
     def put(self, request, pk):
         addr = self._get(request.user, pk)
         if addr is None:
-            return error(message="地址不存在", code=404)
+            return error(message="地址不存在", http_status=404)
 
         serializer = AddressWriteSerializer(data=request.data)
         if not serializer.is_valid():
-            return error(message=flatten_errors(serializer.errors), code=400)
+            return error(message=flatten_errors(serializer.errors), http_status=400)
 
         d = serializer.validated_data
         addr.receiver_name = d["receiver_name"]
@@ -102,7 +102,7 @@ class AddressDetailView(APIView):
     def delete(self, request, pk):
         addr = self._get(request.user, pk)
         if addr is None:
-            return error(message="地址不存在", code=404)
+            return error(message="地址不存在", http_status=404)
 
         user = request.user
         was_default = addr.is_default

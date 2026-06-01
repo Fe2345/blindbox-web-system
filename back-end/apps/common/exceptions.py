@@ -35,21 +35,17 @@ def custom_exception_handler(exc, context):
 
     if response is not None:
         if isinstance(exc, (NotAuthenticated, AuthenticationFailed)):
-            response.data = error(message="请先登录", code=401).data
+            return error(message="请先登录", http_status=401)
         elif isinstance(exc, PermissionDenied):
-            response.data = error(message="没有权限执行此操作", code=403).data
+            return error(message="没有权限执行此操作", http_status=403)
         elif isinstance(exc, NotFound):
-            response.data = error(message="资源不存在", code=404).data
+            return error(message="资源不存在", http_status=404)
         elif isinstance(exc, (ValidationError, ParseError)):
-            response.data = error(message=_first_message(exc.detail), code=400).data
+            return error(message=_first_message(exc.detail), http_status=400)
         elif isinstance(exc, APIException):
-            response.data = error(message=str(exc.detail), code=exc.status_code).data
+            return error(message=str(exc.detail), http_status=exc.status_code)
         else:
-            response.data = error(message="请求处理错误", code=response.status_code).data
+            return error(message="请求处理错误", http_status=response.status_code)
     else:
         logger.exception("未处理的异常: %s", exc)
-        from rest_framework.response import Response
-
-        return Response(error(message="服务器内部错误", code=500).data, status=500)
-
-    return response
+        return error(message="服务器内部错误", http_status=500)

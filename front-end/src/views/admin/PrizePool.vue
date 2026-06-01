@@ -19,8 +19,8 @@
         <el-table-column label="概率(%)" width="120">
           <template #default="{ row }"><el-input-number v-model="row.probability" :min="0" :max="100" size="small" style="width: 90px" /></template>
         </el-table-column>
-        <el-table-column label="库存" width="100">
-          <template #default="{ row }"><el-input-number v-model="row.stock" :min="0" size="small" style="width: 90px" /></template>
+        <el-table-column label="剩余库存" width="120">
+          <template #default="{ row }"><el-input-number v-model="row.remainingQuantity" :min="0" size="small" style="width: 90px" /></template>
         </el-table-column>
       </el-table>
 

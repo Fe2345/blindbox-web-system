@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const merchantRequest = axios.create({
   baseURL: '/merchant/api',
@@ -16,6 +17,8 @@ merchantRequest.interceptors.request.use((config) => {
 merchantRequest.interceptors.response.use(
   (res) => res.data,
   (err) => {
+    const msg = err.response?.data?.message || err.message || '请求失败'
+    ElMessage.error(msg)
     return Promise.reject(err)
   }
 )
