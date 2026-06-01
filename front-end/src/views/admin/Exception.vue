@@ -62,7 +62,7 @@ async function handleResolve() {
     const res = await logStore.resolveException(target.value.id, resultText.value)
     if (res.code === 0) { ElMessage.success('已处理'); dialogVisible.value = false }
     else ElMessage.error(res.message)
-  } catch { ElMessage.error('处理失败') } finally { submitting.value = false }
+  } finally { submitting.value = false }
 }
 
 onMounted(() => logStore.fetchExceptions())

@@ -63,8 +63,6 @@ async function handleRegister() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('注册失败')
   } finally {
     loading.value = false
   }

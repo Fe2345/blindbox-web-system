@@ -10,7 +10,7 @@
       <el-table-column prop="name" label="盲盒名称" width="160" />
       <el-table-column prop="category" label="分类" width="100" />
       <el-table-column label="消耗积分" width="100"><template #default="{ row }">{{ row.costPoints }}</template></el-table-column>
-      <el-table-column label="库存" width="80"><template #default="{ row }">{{ row.stock }}</template></el-table-column>
+      <el-table-column label="剩余库存" width="100"><template #default="{ row }">{{ row.prizes.reduce((s: number, p: any) => s + p.remainingQuantity, 0) }}</template></el-table-column>
       <el-table-column label="奖品数" width="80"><template #default="{ row }">{{ row.prizes.length }}</template></el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
@@ -35,7 +35,7 @@
         <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
         <el-form-item label="消耗积分"><el-input-number v-model="form.costPoints" :min="1" /></el-form-item>
-        <el-form-item label="库存"><el-input-number v-model="form.stock" :min="0" /></el-form-item>
+        <el-form-item label="最大抽取次数"><el-input-number v-model="form.maxDrawCount" :min="1" /></el-form-item>
         <el-form-item label="活动时间"><el-date-picker v-model="form.dateRange" type="daterange" range-separator="至" start-placeholder="开始" end-placeholder="结束" style="width: 100%" /></el-form-item>
       </el-form>
       <template #footer>
@@ -54,9 +54,9 @@ import { ElMessage } from 'element-plus'
 const blindBoxStore = useBlindBoxStore()
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ name: '', category: '', description: '', costPoints: 100, stock: 0, dateRange: null })
+const form = ref({ name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
 
-function showAdd() { isEdit.value = false; form.value = { name: '', category: '', description: '', costPoints: 100, stock: 0, dateRange: null }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row, dateRange: null }; dialogVisible.value = true }
 
 async function handleToggle(id: string, status: string) {

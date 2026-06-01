@@ -16,7 +16,7 @@
               <div class="info-row"><span>分类：</span>{{ box.category }}</div>
               <div class="info-row"><span>活动时间：</span>{{ box.startTime }} ~ {{ box.endTime }}</div>
               <div class="info-row"><span>单次消耗：</span><strong style="color: #e6a23c">{{ box.costPoints }} 积分</strong></div>
-              <div class="info-row"><span>剩余库存：</span>{{ box.stock }}</div>
+              <div class="info-row"><span>剩余库存：</span>{{ box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) }}</div>
             </div>
           </div>
         </el-card>
@@ -32,7 +32,7 @@
               <el-tag :color="rarityColor(prize.rarity)" style="color: #fff; border: none" size="small">
                 {{ rarityLabel(prize.rarity) }}
               </el-tag>
-              <div class="prize-stock">库存：{{ prize.stock }}</div>
+              <div class="prize-stock">库存：{{ prize.remainingQuantity }}</div>
             </div>
           </div>
         </el-card>
@@ -76,14 +76,14 @@
               type="warning"
               size="large"
               style="width: 100%"
-              :disabled="box.status === 'ended' || box.stock <= 0 || (userStore.userInfo?.points || 0) < box.costPoints"
+              :disabled="box.status === 'ended' || box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) <= 0 || (userStore.userInfo?.points || 0) < box.costPoints"
               :loading="drawing"
               @click="handleDraw"
             >
               立即抽取
             </el-button>
             <div v-if="(userStore.userInfo?.points || 0) < box.costPoints" class="warn-tip">积分不足，无法抽取</div>
-            <div v-if="box.stock <= 0" class="warn-tip">库存不足</div>
+            <div v-if="box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) <= 0" class="warn-tip">库存不足</div>
             <div v-if="box.status === 'ended'" class="warn-tip">活动已结束</div>
           </div>
         </el-card>
@@ -127,8 +127,6 @@ async function handleDraw() {
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('抽取失败')
   } finally {
     drawing.value = false
   }
