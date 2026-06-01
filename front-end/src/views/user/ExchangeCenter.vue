@@ -127,7 +127,7 @@ async function handleApply() {
   applying.value = true
   try {
     const res = await exchangeStore.applyForExchange(currentPost.value.id, applyForm.value)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('申请已提交')
       applyDialogVisible.value = false
     } else {

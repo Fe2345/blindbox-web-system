@@ -92,7 +92,7 @@ function showOrderDetail(order: Order) {
 
 async function handleConfirm(id: string) {
   const res = await orderStore.confirmReceive(id)
-  if (res.code === 0) ElMessage.success('确认收货成功')
+  if (res.code === 200) ElMessage.success('确认收货成功')
   else ElMessage.error(res.message)
 }
 

@@ -70,7 +70,7 @@ async function handleShip() {
   shipping.value = true
   try {
     const res = await orderStore.ship(shipTarget.value.id, shipForm.value.company, shipForm.value.trackingNo)
-    if (res.code === 0) { ElMessage.success('发货成功'); shipDialogVisible.value = false }
+    if (res.code === 200) { ElMessage.success('发货成功'); shipDialogVisible.value = false }
     else ElMessage.error(res.message)
   } catch { ElMessage.error('发货失败') } finally { shipping.value = false }
 }

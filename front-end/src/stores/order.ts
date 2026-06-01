@@ -8,7 +8,7 @@ export const useOrderStore = defineStore('order', () => {
 
   async function fetchOrders() {
     const res: any = await orderApi.getOrders()
-    if (res.code === 0) {
+    if (res.code === 200) {
       orders.value = res.data
     }
     return res
@@ -16,7 +16,7 @@ export const useOrderStore = defineStore('order', () => {
 
   async function confirmReceive(id: string) {
     const res: any = await orderApi.confirmReceive(id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       await fetchOrders()
     }
     return res

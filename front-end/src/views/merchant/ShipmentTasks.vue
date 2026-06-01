@@ -142,7 +142,7 @@ async function handleShip() {
   shipping.value = true
   try {
     const res: any = await shipmentStore.confirmShip(currentTask.value.id, shipForm)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('发货成功')
       shipVisible.value = false
       loadData()

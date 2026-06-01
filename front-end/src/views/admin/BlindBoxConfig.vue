@@ -61,7 +61,7 @@ function showEdit(row: any) { isEdit.value = true; form.value = { ...row, dateRa
 
 async function handleToggle(id: string, status: string) {
   const res = await blindBoxStore.updateStatus(id, status)
-  if (res.code === 0) ElMessage.success(status === 'active' ? '已上架' : '已下架')
+  if (res.code === 200) ElMessage.success(status === 'active' ? '已上架' : '已下架')
 }
 
 onMounted(() => blindBoxStore.fetchList())

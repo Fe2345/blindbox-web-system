@@ -45,17 +45,17 @@
           <div class="address-card">
             <div class="address-info">
               <div>
-                <strong>{{ addr.name }}</strong>
-                <span style="margin-left: 12px; color: #909399">{{ addr.phone }}</span>
-                <el-tag v-if="addr.isDefault" type="success" size="small" style="margin-left: 8px">默认</el-tag>
+                <strong>{{ addr.receiver_name }}</strong>
+                <span style="margin-left: 12px; color: #909399">{{ addr.receiver_phone }}</span>
+                <el-tag v-if="addr.is_default" type="success" size="small" style="margin-left: 8px">默认</el-tag>
               </div>
               <div style="color: #606266; margin-top: 4px">
-                {{ addr.province }}{{ addr.city }}{{ addr.district }}{{ addr.detail }}
+                {{ addr.province?.name }}{{ addr.city?.name }}{{ addr.district?.name }}{{ addr.detail }}
               </div>
             </div>
             <div class="address-actions">
               <el-button size="small" @click="showAddressDialog(addr)">编辑</el-button>
-              <el-button v-if="!addr.isDefault" size="small" type="success" @click="handleSetDefault(addr)">设为默认</el-button>
+              <el-button v-if="!addr.is_default" size="small" type="success" @click="handleSetDefault(addr)">设为默认</el-button>
               <el-popconfirm title="确认删除该地址？" @confirm="handleDeleteAddress(addr.id)">
                 <template #reference>
                   <el-button size="small" type="danger">删除</el-button>
@@ -85,26 +85,29 @@
     <!-- 地址编辑弹窗 -->
     <el-dialog v-model="addressDialogVisible" :title="editingAddress ? '编辑地址' : '新增地址'" width="500px">
       <el-form :model="addressForm" label-width="80px" ref="addressFormRef" :rules="addressRules">
-        <el-form-item label="收货人" prop="name">
-          <el-input v-model="addressForm.name" />
+        <el-form-item label="收货人" prop="receiver_name">
+          <el-input v-model="addressForm.receiver_name" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="addressForm.phone" />
+        <el-form-item label="手机号" prop="receiver_phone">
+          <el-input v-model="addressForm.receiver_phone" />
         </el-form-item>
-        <el-form-item label="省份" prop="province">
-          <el-input v-model="addressForm.province" />
+        <el-form-item label="省份代码" prop="province_code">
+          <el-input v-model="addressForm.province_code" />
         </el-form-item>
-        <el-form-item label="城市" prop="city">
-          <el-input v-model="addressForm.city" />
+        <el-form-item label="城市代码" prop="city_code">
+          <el-input v-model="addressForm.city_code" />
         </el-form-item>
-        <el-form-item label="区县" prop="district">
-          <el-input v-model="addressForm.district" />
+        <el-form-item label="区县代码" prop="district_code">
+          <el-input v-model="addressForm.district_code" />
+        </el-form-item>
+        <el-form-item label="街道" prop="street">
+          <el-input v-model="addressForm.street" />
         </el-form-item>
         <el-form-item label="详细地址" prop="detail">
           <el-input v-model="addressForm.detail" />
         </el-form-item>
         <el-form-item label="设为默认">
-          <el-switch v-model="addressForm.isDefault" />
+          <el-switch v-model="addressForm.is_default" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -139,21 +142,22 @@ const profileForm = reactive({
 })
 
 const addressForm = reactive({
-  name: '',
-  phone: '',
-  province: '',
-  city: '',
-  district: '',
+  receiver_name: '',
+  receiver_phone: '',
+  province_code: '',
+  city_code: '',
+  district_code: '',
+  street: '',
   detail: '',
-  isDefault: false,
+  is_default: false,
 })
 
 const addressRules = {
-  name: [{ required: true, message: '请输入收货人', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
-  province: [{ required: true, message: '请输入省份', trigger: 'blur' }],
-  city: [{ required: true, message: '请输入城市', trigger: 'blur' }],
-  district: [{ required: true, message: '请输入区县', trigger: 'blur' }],
+  receiver_name: [{ required: true, message: '请输入收货人', trigger: 'blur' }],
+  receiver_phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
+  province_code: [{ required: true, message: '请输入省份代码', trigger: 'blur' }],
+  city_code: [{ required: true, message: '请输入城市代码', trigger: 'blur' }],
+  district_code: [{ required: true, message: '请输入区县代码', trigger: 'blur' }],
   detail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
 }
 
@@ -161,7 +165,7 @@ async function handleSaveProfile() {
   saving.value = true
   try {
     const res = await userStore.updateUserInfo({ username: profileForm.username, phone: profileForm.phone })
-    if (res.code === 0) ElMessage.success('保存成功')
+    if (res.code === 200) ElMessage.success('保存成功')
     else ElMessage.error(res.message)
   } catch {
     ElMessage.error('保存失败')
@@ -173,9 +177,22 @@ async function handleSaveProfile() {
 function showAddressDialog(addr: Address | null) {
   editingAddress.value = addr
   if (addr) {
-    Object.assign(addressForm, addr)
+    Object.assign(addressForm, {
+      receiver_name: addr.receiver_name,
+      receiver_phone: addr.receiver_phone,
+      province_code: addr.province?.code || '',
+      city_code: addr.city?.code || '',
+      district_code: addr.district?.code || '',
+      street: addr.street,
+      detail: addr.detail,
+      is_default: addr.is_default,
+    })
   } else {
-    Object.assign(addressForm, { name: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: false })
+    Object.assign(addressForm, {
+      receiver_name: '', receiver_phone: '',
+      province_code: '', city_code: '', district_code: '',
+      street: '', detail: '', is_default: false,
+    })
   }
   addressDialogVisible.value = true
 }
@@ -190,7 +207,7 @@ async function handleSaveAddress() {
     } else {
       res = await userStore.addAddress({ ...addressForm })
     }
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success(editingAddress.value ? '修改成功' : '添加成功')
       addressDialogVisible.value = false
     } else {
@@ -204,14 +221,14 @@ async function handleSaveAddress() {
 }
 
 async function handleSetDefault(addr: Address) {
-  const res = await userStore.updateAddress(addr.id, { isDefault: true })
-  if (res.code === 0) ElMessage.success('设置成功')
+  const res = await userStore.updateAddress(addr.id, { is_default: true })
+  if (res.code === 200) ElMessage.success('设置成功')
   else ElMessage.error(res.message)
 }
 
 async function handleDeleteAddress(id: string) {
   const res = await userStore.deleteAddress(id)
-  if (res.code === 0) ElMessage.success('删除成功')
+  if (res.code === 200) ElMessage.success('删除成功')
   else ElMessage.error(res.message)
 }
 

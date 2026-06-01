@@ -74,3 +74,19 @@ class RegisterSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
+
+
+class UserInfoSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150, required=False)
+    phone = serializers.CharField(max_length=11, required=False)
+
+    def validate_username(self, value):
+        user = self.context["request"].user
+        if User.objects.filter(username=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("用户名已存在")
+        return value
+
+    def validate_phone(self, value):
+        if not re.match(r"^1[3-9]\d{9}$", value):
+            raise serializers.ValidationError("请输入有效的 11 位手机号")
+        return value

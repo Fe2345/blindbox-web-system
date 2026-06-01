@@ -52,11 +52,11 @@ const filteredUsers = computed(() => {
 
 async function handleFreeze(id: string) {
   const res = await userStore.updateStatus(id, 'frozen')
-  if (res.code === 0) ElMessage.success('已冻结')
+  if (res.code === 200) ElMessage.success('已冻结')
 }
 async function handleUnfreeze(id: string) {
   const res = await userStore.updateStatus(id, 'active')
-  if (res.code === 0) ElMessage.success('已解冻')
+  if (res.code === 200) ElMessage.success('已解冻')
 }
 
 onMounted(() => userStore.fetchList())

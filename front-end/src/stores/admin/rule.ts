@@ -8,13 +8,13 @@ export const useRuleStore = defineStore('rule', () => {
 
   async function fetchRules() {
     const res: any = await api.getRules()
-    if (res.code === 0) rules.value = res.data
+    if (res.code === 200) rules.value = res.data
     return res
   }
 
   async function saveRules(data: Partial<RuleConfig>) {
     const res: any = await api.saveRules(data)
-    if (res.code === 0) await fetchRules()
+    if (res.code === 200) await fetchRules()
     return res
   }
 

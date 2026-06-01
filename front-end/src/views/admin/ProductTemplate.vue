@@ -75,7 +75,7 @@ function showAdd() { isEdit.value = false; form.value = { name: '', category: ''
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row }; dialogVisible.value = true }
 async function handleOffline(id: string) {
   const res = await productStore.offline(id)
-  if (res.code === 0) ElMessage.success('已下架')
+  if (res.code === 200) ElMessage.success('已下架')
 }
 
 onMounted(() => productStore.fetchList())

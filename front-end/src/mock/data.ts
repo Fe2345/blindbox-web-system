@@ -182,8 +182,8 @@ export const mockTransactionRecords: TransactionRecord[] = [
 ]
 
 export const mockAddresses: Address[] = [
-  { id: 'addr001', name: '张三', phone: '13800138000', province: '北京市', city: '北京市', district: '朝阳区', detail: '某某路123号', isDefault: true },
-  { id: 'addr002', name: '张三', phone: '13800138000', province: '上海市', city: '上海市', district: '浦东新区', detail: '某某大道456号', isDefault: false },
+  { id: 'addr001', receiver_name: '张三', receiver_phone: '13800138000', province: { code: '110000', name: '北京市', level: 1 }, city: { code: '110100', name: '北京市', level: 2 }, district: { code: '110105', name: '朝阳区', level: 3 }, street: '', detail: '某某路123号', is_default: true },
+  { id: 'addr002', receiver_name: '张三', receiver_phone: '13800138000', province: { code: '310000', name: '上海市', level: 1 }, city: { code: '310100', name: '上海市', level: 2 }, district: { code: '310115', name: '浦东新区', level: 3 }, street: '', detail: '某某大道456号', is_default: false },
 ]
 
 // ========== Admin Mock Data ==========

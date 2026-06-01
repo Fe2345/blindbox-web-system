@@ -9,13 +9,13 @@ export const useMerchantProductStore = defineStore('merchantProduct', () => {
 
   async function fetchList(params?: { status?: string; keyword?: string }) {
     const res: any = await productApi.getMerchantProducts(params)
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 
   async function fetchDetail(id: string) {
     const res: any = await productApi.getMerchantProductDetail(id)
-    if (res.code === 0) current.value = res.data
+    if (res.code === 200) current.value = res.data
     return res
   }
 

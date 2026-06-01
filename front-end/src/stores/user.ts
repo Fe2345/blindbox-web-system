@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function updateUserInfo(data: Partial<UserInfo>) {
     const res: any = await userApi.updateUserInfo(data)
-    if (res.code === 0 && userInfo.value) {
+    if (res.code === 200 && userInfo.value) {
       Object.assign(userInfo.value, data)
     }
     return res
@@ -47,7 +47,7 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
-  async function addAddress(data: Omit<Address, 'id'>) {
+  async function addAddress(data: Record<string, any>) {
     const res: any = await userApi.addAddress(data)
     if (res.code === 200) {
       await fetchAddresses()
@@ -55,7 +55,7 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
-  async function updateAddress(id: string, data: Partial<Address>) {
+  async function updateAddress(id: string, data: Record<string, any>) {
     const res: any = await userApi.updateAddress(id, data)
     if (res.code === 200) {
       await fetchAddresses()

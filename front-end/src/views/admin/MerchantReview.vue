@@ -61,7 +61,7 @@ async function handleReview() {
   submitting.value = true
   try {
     const res = await merchantStore.review(reviewTarget.value.id, reviewAction.value, reviewNote.value)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success(reviewAction.value === 'approve' ? '已通过' : '已驳回')
       dialogVisible.value = false
     } else ElMessage.error(res.message)

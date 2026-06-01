@@ -17,6 +17,7 @@ from .serializers import (
     DivisionSerializer,
     LoginSerializer,
     RegisterSerializer,
+    UserInfoSerializer,
 )
 
 logger = logging.getLogger("blindbox")
@@ -242,3 +243,40 @@ class CookieTokenRefreshView(TokenRefreshView):
                     **cookie_kwargs,
                 )
         return response
+
+
+class UserInfoView(APIView):
+    """获取 / 修改当前用户基本资料"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return success(data=self._user_data(user))
+
+    def put(self, request):
+        serializer = UserInfoSerializer(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), code=400)
+
+        data = serializer.validated_data
+        user = request.user
+        updatable = ["username", "phone"]
+        for field in updatable:
+            if field in data:
+                setattr(user, field, data[field])
+        if any(f in data for f in updatable):
+            user.save(update_fields=[f for f in updatable if f in data])
+
+        return success(data=self._user_data(user))
+
+    @staticmethod
+    def _user_data(user):
+        return {
+            "id": user.id,
+            "username": user.username,
+            "phone": user.phone,
+            "avatar": user.avatar,
+            "status": "active" if user.is_active else "frozen",
+            "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
+        }

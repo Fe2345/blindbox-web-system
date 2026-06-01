@@ -59,7 +59,7 @@ function showResolve(row: any) { target.value = row; result.value = ''; dialogVi
 
 async function handleResolve() {
   const res = await exchangeStore.resolve(target.value.id, 'resolve', result.value)
-  if (res.code === 0) { ElMessage.success('已处理'); dialogVisible.value = false }
+  if (res.code === 200) { ElMessage.success('已处理'); dialogVisible.value = false }
   else ElMessage.error(res.message)
 }
 
