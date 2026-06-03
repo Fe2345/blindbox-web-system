@@ -2,10 +2,10 @@
 统一响应格式。
 
 成功:
-  {"code": 0, "message": "success", "data": {...}}
+  {"code": 200, "message": "success", "data": {...}}
 
 分页:
-  {"code": 0, "message": "success", "data": {"count": 100, "page": 1, "page_size": 10, "results": [...]}}
+  {"code": 200, "message": "success", "data": {"count": 100, "page": 1, "page_size": 10, "results": [...]}}
 
 错误:
   {"code": -1, "message": "参数错误", "data": null}
@@ -14,7 +14,7 @@
 from rest_framework.response import Response as DRFResponse
 
 
-def success(data=None, message: str = "success", code: int = 0) -> DRFResponse:
+def success(data=None, message: str = "success", code: int = 200) -> DRFResponse:
     return DRFResponse({"code": code, "message": message, "data": data})
 
 

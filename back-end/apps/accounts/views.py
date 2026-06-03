@@ -144,7 +144,7 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
-            return error(message=flatten_errors(serializer.errors), code=400)
+            return error(message=flatten_errors(serializer.errors), http_status=400)
 
         data = serializer.validated_data
         User.objects.create_user(
@@ -161,15 +161,15 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
-            return error(message=flatten_errors(serializer.errors), code=400)
+            return error(message=flatten_errors(serializer.errors), http_status=400)
 
         data = serializer.validated_data
         user = authenticate(request, username=data["username"], password=data["password"])
         if user is None:
-            return error(message="用户名或密码错误", code=400)
+            return error(message="用户名或密码错误", http_status=400)
 
         if not user.is_active:
-            return error(message="账号已被冻结", code=400)
+            return error(message="账号已被冻结", http_status=400)
 
         jwt_config = settings.SIMPLE_JWT
         refresh = RefreshToken.for_user(user)
@@ -257,7 +257,7 @@ class UserInfoView(APIView):
     def put(self, request):
         serializer = UserInfoSerializer(data=request.data, context={"request": request})
         if not serializer.is_valid():
-            return error(message=flatten_errors(serializer.errors), code=400)
+            return error(message=flatten_errors(serializer.errors), http_status=400)
 
         data = serializer.validated_data
         user = request.user

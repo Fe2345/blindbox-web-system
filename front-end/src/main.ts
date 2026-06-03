@@ -14,7 +14,9 @@ import './styles/global.css'
 // 供 request.ts 使用，确保用户 API 请求直接走真实 XHR，不经过 mock 链路。
 ;(window as any).__axiosOriginalAdapter = axios.defaults.adapter
 
-setupMock()
+if (import.meta.env.VITE_USE_MOCK === 'true') {
+  setupMock()
+}
 
 const app = createApp(App)
 
