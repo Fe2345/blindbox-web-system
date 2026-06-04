@@ -121,7 +121,7 @@ async function handleDraw() {
   drawing.value = true
   try {
     const res = await blindBoxStore.draw(box.id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('抽取成功！')
       router.push('/draw-result')
     } else {

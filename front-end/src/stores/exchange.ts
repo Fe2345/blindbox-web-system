@@ -9,7 +9,7 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function fetchPosts() {
     const res: any = await exchangeApi.getExchangePosts()
-    if (res.code === 0) {
+    if (res.code === 200) {
       posts.value = res.data
     }
     return res
@@ -22,7 +22,7 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function fetchApplications() {
     const res: any = await exchangeApi.getExchangeApplications()
-    if (res.code === 0) {
+    if (res.code === 200) {
       applications.value = res.data
     }
     return res
@@ -30,7 +30,7 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function acceptApp(id: string) {
     const res: any = await exchangeApi.acceptApplication(id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       await fetchApplications()
     }
     return res
@@ -38,7 +38,7 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function rejectApp(id: string) {
     const res: any = await exchangeApi.rejectApplication(id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       await fetchApplications()
     }
     return res

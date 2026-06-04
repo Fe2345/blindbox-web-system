@@ -9,7 +9,7 @@ export const useMerchantAuthStore = defineStore('merchantAuth', () => {
 
   async function login(username: string, password: string) {
     const res: any = await authApi.merchantLogin({ username, password })
-    if (res.code === 0) {
+    if (res.code === 200) {
       token.value = res.data.token
       merchantInfo.value = res.data.merchant
       isLoggedIn.value = true
@@ -20,7 +20,7 @@ export const useMerchantAuthStore = defineStore('merchantAuth', () => {
 
   async function fetchInfo() {
     const res: any = await authApi.getMerchantInfo()
-    if (res.code === 0) merchantInfo.value = res.data
+    if (res.code === 200) merchantInfo.value = res.data
     return res
   }
 

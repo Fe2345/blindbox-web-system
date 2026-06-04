@@ -83,7 +83,7 @@ async function handleSubmit() {
   loading.value = true
   try {
     const res: any = await productStore.submit(form)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('商品已提交，等待管理员审核')
       router.push('/products')
     } else {

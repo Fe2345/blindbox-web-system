@@ -10,7 +10,7 @@ export const useBlindBoxStore = defineStore('blindbox', () => {
 
   async function fetchBlindBoxes() {
     const res: any = await blindboxApi.getBlindBoxes()
-    if (res.code === 0) {
+    if (res.code === 200) {
       blindBoxes.value = res.data
     }
     return res
@@ -18,7 +18,7 @@ export const useBlindBoxStore = defineStore('blindbox', () => {
 
   async function fetchBlindBoxDetail(id: string) {
     const res: any = await blindboxApi.getBlindBoxDetail(id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       currentBox.value = res.data
     }
     return res
@@ -26,7 +26,7 @@ export const useBlindBoxStore = defineStore('blindbox', () => {
 
   async function draw(id: string) {
     const res: any = await blindboxApi.drawBlindBox(id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       drawResult.value = res.data
     }
     return res

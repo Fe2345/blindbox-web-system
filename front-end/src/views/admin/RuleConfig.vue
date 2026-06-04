@@ -54,7 +54,7 @@ async function handleSave() {
   saving.value = true
   try {
     const res = await ruleStore.saveRules({ ...form })
-    if (res.code === 0) ElMessage.success('保存成功')
+    if (res.code === 200) ElMessage.success('保存成功')
     else ElMessage.error(res.message)
   } finally { saving.value = false }
 }

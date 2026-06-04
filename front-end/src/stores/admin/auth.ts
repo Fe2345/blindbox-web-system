@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(username: string, password: string) {
     const res: any = await authApi.adminLogin({ username, password })
-    if (res.code === 0) {
+    if (res.code === 200) {
       token.value = res.data.token
       adminInfo.value = res.data.user
       isLoggedIn.value = true
@@ -20,7 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchInfo() {
     const res: any = await authApi.getAdminInfo()
-    if (res.code === 0) adminInfo.value = res.data
+    if (res.code === 200) adminInfo.value = res.data
     return res
   }
 

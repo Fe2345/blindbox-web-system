@@ -57,7 +57,7 @@ async function handleRegister() {
   loading.value = true
   try {
     const res = await userStore.register(form.username, form.phone, form.password)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('注册成功，请登录')
       router.push('/login')
     } else {

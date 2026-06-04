@@ -43,7 +43,7 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await userStore.login(form.username, form.password)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('登录成功')
       router.push('/')
     } else {

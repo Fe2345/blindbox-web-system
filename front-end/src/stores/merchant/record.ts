@@ -13,7 +13,7 @@ export const useMerchantRecordStore = defineStore('merchantRecord', () => {
     endDate?: string
   }) {
     const res: any = await recordApi.getMerchantRecords(params)
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 

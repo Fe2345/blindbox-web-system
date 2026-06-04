@@ -3,9 +3,18 @@ import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, resolve(__dirname, '..'))
+  const envDir = resolve(__dirname, '..')
+  const env = loadEnv(mode, envDir)
+
+  const backendUrl = env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+  const frontendPort = Number(env.VITE_PORT) || 3000
+
+  console.log('[vite] envDir:', envDir)
+  console.log('[vite] VITE_PORT:', env.VITE_PORT, '→ port:', frontendPort)
+  console.log('[vite] VITE_BACKEND_URL:', env.VITE_BACKEND_URL, '→ proxy target:', backendUrl)
 
   return {
+    envDir,
     plugins: [vue()],
     resolve: {
       alias: {
@@ -22,18 +31,18 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: Number(env.VITE_PORT) || 3000,
+      port: frontendPort,
       proxy: {
         '/user/api': {
-          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
+          target: backendUrl,
           changeOrigin: true,
         },
         '/merchant/api': {
-          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
+          target: backendUrl,
           changeOrigin: true,
         },
         '/admin/api': {
-          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
+          target: backendUrl,
           changeOrigin: true,
         },
       },

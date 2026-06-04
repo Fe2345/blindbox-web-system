@@ -10,7 +10,7 @@ export const usePointsStore = defineStore('points', () => {
 
   async function fetchRecords() {
     const res: any = await pointsApi.getPointsRecords()
-    if (res.code === 0) {
+    if (res.code === 200) {
       records.value = res.data
     }
     return res
@@ -18,7 +18,7 @@ export const usePointsStore = defineStore('points', () => {
 
   async function fetchBalance() {
     const res: any = await pointsApi.getPointsBalance()
-    if (res.code === 0) {
+    if (res.code === 200) {
       balance.value = res.data.balance
     }
     return res
@@ -26,7 +26,7 @@ export const usePointsStore = defineStore('points', () => {
 
   async function fetchTransactions() {
     const res: any = await pointsApi.getTransactions()
-    if (res.code === 0) {
+    if (res.code === 200) {
       transactions.value = res.data
     }
     return res

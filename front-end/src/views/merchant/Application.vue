@@ -93,7 +93,7 @@ function statusType(s: string) {
 
 async function loadApplication() {
   const res: any = await applicationApi.getApplicationStatus()
-  if (res.code === 0 && res.data) existingApp.value = res.data
+  if (res.code === 200 && res.data) existingApp.value = res.data
 }
 
 async function handleSubmit() {
@@ -101,7 +101,7 @@ async function handleSubmit() {
   loading.value = true
   try {
     const res: any = await applicationApi.submitApplication(form)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('申请已提交，等待审核')
       showForm.value = false
       loadApplication()

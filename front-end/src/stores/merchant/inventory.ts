@@ -9,7 +9,7 @@ export const useMerchantInventoryStore = defineStore('merchantInventory', () => 
 
   async function fetchList() {
     const res: any = await inventoryApi.getInventoryList()
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 
@@ -19,7 +19,7 @@ export const useMerchantInventoryStore = defineStore('merchantInventory', () => 
 
   async function fetchRecords(productId?: string) {
     const res: any = await inventoryApi.getInventoryRecords(productId)
-    if (res.code === 0) records.value = res.data
+    if (res.code === 200) records.value = res.data
     return res
   }
 

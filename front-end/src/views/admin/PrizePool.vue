@@ -48,7 +48,7 @@ function totalProb(prizes: any[]) {
 
 async function handleSave(box: any) {
   const res = await blindBoxStore.savePrizePool(box.id, box.prizes)
-  if (res.code === 0) ElMessage.success('保存成功')
+  if (res.code === 200) ElMessage.success('保存成功')
   else ElMessage.error(res.message)
 }
 

@@ -8,13 +8,13 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function fetchList() {
     const res: any = await api.getExchangeList()
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 
   async function resolve(id: string, action: string, note: string) {
     const res: any = await api.resolveException(id, { action, note })
-    if (res.code === 0) await fetchList()
+    if (res.code === 200) await fetchList()
     return res
   }
 

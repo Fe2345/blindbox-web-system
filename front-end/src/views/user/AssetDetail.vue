@@ -138,7 +138,7 @@ async function handleRecycle() {
   recycling.value = true
   try {
     const res = await assetStore.recycle(asset.id)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success(`回收成功，获得 ${res.data.recycledPoints} 积分`)
       showRecycleDialog.value = false
       await assetStore.fetchAssetDetail(asset.id)
@@ -153,7 +153,7 @@ async function handleRecycle() {
 async function handleShip() {
   if (!asset) return
   const res = await assetStore.ship(asset.id)
-  if (res.code === 0) {
+  if (res.code === 200) {
     ElMessage.success('发货申请已提交')
     await assetStore.fetchAssetDetail(asset.id)
   } else {
@@ -170,7 +170,7 @@ async function handlePublishExchange() {
   publishing.value = true
   try {
     const res = await assetStore.publishExchange(asset.id, exchangeForm.value)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('发布成功')
       showExchangeDialog.value = false
       await assetStore.fetchAssetDetail(asset.id)

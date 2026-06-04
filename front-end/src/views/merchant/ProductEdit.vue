@@ -57,7 +57,7 @@ const rules = {
 async function loadProduct() {
   pageLoading.value = true
   const res: any = await productStore.fetchDetail(productId)
-  if (res.code === 0 && res.data) {
+  if (res.code === 200 && res.data) {
     form.name = res.data.name
     form.image = res.data.image
     form.description = res.data.description
@@ -70,7 +70,7 @@ async function handleSubmit() {
   loading.value = true
   try {
     const res: any = await productStore.update(productId, form)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('修改成功')
       router.push('/products')
     } else {
