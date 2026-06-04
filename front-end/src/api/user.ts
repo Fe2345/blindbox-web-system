@@ -39,3 +39,13 @@ export function logout() {
 export function refreshToken() {
   return request.post('/token/refresh/', {})
 }
+
+export function changePassword(data: { oldPassword: string; newPassword: string }) {
+  return request.post('/user/change-password/', data)
+}
+
+export function getDivisions(parentCode?: string) {
+  const params: Record<string, string> = {}
+  if (parentCode) params.parent_code = parentCode
+  return request.get('/divisions/', { params })
+}

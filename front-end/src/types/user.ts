@@ -22,14 +22,14 @@ export interface RegisterForm {
 
 export interface Address {
   id: string
-  receiver_name: string
-  receiver_phone: string
+  receiverName: string
+  receiverPhone: string
   province: { code: string; name: string; level: number }
   city: { code: string; name: string; level: number }
   district: { code: string; name: string; level: number }
   street: string
   detail: string
-  is_default: boolean
+  isDefault: boolean
 }
 
 export interface AdminUser {

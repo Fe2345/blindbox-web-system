@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     AddressDetailView,
     AddressListView,
+    ChangePasswordView,
     CookieTokenRefreshView,
     DivisionListView,
     LoginView,
@@ -20,4 +21,5 @@ urlpatterns = [
     path("user/info/", UserInfoView.as_view(), name="user-info"),
     path("user/addresses/", AddressListView.as_view(), name="address-list"),
     path("user/addresses/<int:pk>/", AddressDetailView.as_view(), name="address-detail"),
+    path("user/change-password/", ChangePasswordView.as_view(), name="change-password"),
 ]

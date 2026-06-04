@@ -280,3 +280,27 @@ class UserInfoView(APIView):
             "status": "active" if user.is_active else "frozen",
             "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
         }
+
+
+class ChangePasswordView(APIView):
+    """修改密码"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get("oldPassword")
+        new_password = request.data.get("newPassword")
+
+        if not old_password or not new_password:
+            return error(message="请提供原密码和新密码")
+
+        if len(new_password) < 6:
+            return error(message="新密码至少6位")
+
+        user = request.user
+        if not user.check_password(old_password):
+            return error(message="原密码错误")
+
+        user.set_password(new_password)
+        user.save()
+        return success(message="密码修改成功")
