@@ -39,6 +39,23 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <!-- 库存预警 -->
+    <el-card style="margin-top: 16px" v-if="dashData?.lowStockProducts && dashData.lowStockProducts > 0">
+      <template #header><span>库存预警</span></template>
+      <el-alert
+        :title="`您有 ${dashData.lowStockProducts} 个商品库存不足（低于10件），请及时补货`"
+        type="warning"
+        show-icon
+        :closable="false"
+      >
+        <template #default>
+          <el-button type="primary" size="small" style="margin-top: 8px" @click="router.push('/inventory')">
+            前往库存管理
+          </el-button>
+        </template>
+      </el-alert>
+    </el-card>
   </div>
 </template>
 
@@ -60,12 +77,12 @@ const statCards = computed(() => [
 ])
 
 const quickLinks = [
-  { label: '商品提交', icon: 'Plus', color: '#409eff', link: '/products/submit' },
-  { label: '商品管理', icon: 'Goods', color: '#67c23a', link: '/products' },
-  { label: '库存管理', icon: 'Box', color: '#e6a23c', link: '/inventory' },
-  { label: '发货任务', icon: 'Van', color: '#f56c6c', link: '/shipments' },
-  { label: '记录查询', icon: 'Document', color: '#909399', link: '/records' },
-  { label: '商家资料', icon: 'List', color: '#409eff', link: '/profile' },
+  { label: '商品提交', icon: Plus, color: '#409eff', link: '/products/submit' },
+  { label: '商品管理', icon: Goods, color: '#67c23a', link: '/products' },
+  { label: '库存管理', icon: Box, color: '#e6a23c', link: '/inventory' },
+  { label: '发货任务', icon: Van, color: '#f56c6c', link: '/shipments' },
+  { label: '记录查询', icon: Document, color: '#909399', link: '/records' },
+  { label: '商家资料', icon: List, color: '#409eff', link: '/profile' },
 ]
 
 onMounted(() => dashStore.fetchDashboard())
@@ -78,6 +95,7 @@ onMounted(() => dashStore.fetchDashboard())
 .todo-item { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid #ebeef5; cursor: pointer; }
 .todo-item:hover { color: #409eff; }
 .todo-item .arrow { margin-left: auto; color: #c0c4cc; }
+.empty-tip { text-align: center; color: #909399; padding: 20px 0; }
 .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .quick-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px; border: 1px solid #ebeef5; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
 .quick-item:hover { border-color: #409eff; background: #f0f7ff; }

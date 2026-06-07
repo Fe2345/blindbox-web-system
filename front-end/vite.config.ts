@@ -19,6 +19,22 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
+    // 添加 SPA fallback 配置
+    middlewareMode: false,
+    proxy: {
+      '/merchant/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/user/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
   },
 })

@@ -6,10 +6,11 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import MerchantApp from './MerchantApp.vue'
 import router from './router/merchant'
-import { setupMock } from './mock'
 import './styles/merchant.css'
 
-setupMock()
+// 注释掉 mock 以使用真实后端
+// import { setupMock } from './mock'
+// setupMock()
 
 const app = createApp(MerchantApp)
 

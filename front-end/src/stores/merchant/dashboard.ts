@@ -5,12 +5,20 @@ import type { MerchantDashboard } from '@/types/merchant-self'
 
 export const useMerchantDashboardStore = defineStore('merchantDashboard', () => {
   const data = ref<MerchantDashboard | null>(null)
+  const loading = ref(false)
 
   async function fetchDashboard() {
-    const res: any = await dashboardApi.getMerchantDashboard()
-    if (res.code === 0) data.value = res.data
-    return res
+    loading.value = true
+    try {
+      const res: any = await dashboardApi.getMerchantDashboard()
+      if (res.code === 200) {
+        data.value = res.data
+      }
+      return res
+    } finally {
+      loading.value = false
+    }
   }
 
-  return { data, fetchDashboard }
+  return { data, loading, fetchDashboard }
 })

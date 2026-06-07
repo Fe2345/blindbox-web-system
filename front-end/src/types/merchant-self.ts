@@ -1,86 +1,134 @@
-export interface MerchantApplication {
-  id: string
-  merchantName: string
-  contactName: string
-  phone: string
-  businessScope: string
-  supplyDescription: string
-  status: 'pending' | 'approved' | 'rejected'
-  reviewNote: string
-  createdAt: string
-  reviewedAt: string | null
-}
-
-export interface MerchantProduct {
-  id: string
+/** 商家信息 */
+export interface MerchantInfo {
+  id: number
+  username: string
   name: string
-  image: string
-  description: string
-  category: string
-  rarity: 'N' | 'R' | 'SR' | 'SSR'
-  stock: number
-  status: 'pending' | 'approved' | 'rejected' | 'offline'
-  reviewNote: string
-  createdAt: string
+  contact_name: string
+  phone: string
+  email: string
+  license: string
+  business_scope: string
+  supply_desc: string
+  status: 'pending' | 'approved' | 'rejected' | 'frozen'
+  status_display: string
+  credit_score: number
+  review_note: string
+  reviewed_at: string | null
+  created_at: string
 }
 
+/** 商家入驻申请参数 */
+export interface MerchantApplicationData {
+  name: string
+  contact_name: string
+  phone: string
+  email?: string
+  license?: string
+  business_scope?: string
+  supply_desc?: string
+}
+
+/** 商家工作台数据 */
 export interface MerchantDashboard {
   totalProducts: number
   pendingProducts: number
   lowStockProducts: number
   pendingShipments: number
-  reviewStatus: string
+  totalStock: number
   todos: MerchantTodo[]
 }
 
+/** 待办事项 */
 export interface MerchantTodo {
-  id: number
+  id: string
   title: string
-  type: 'product' | 'shipment' | 'stock'
   link: string
 }
 
+/** 商品信息 */
+export interface MerchantProduct {
+  id: number
+  name: string
+  image: string
+  category: string
+  rarity: 'N' | 'R' | 'SR' | 'SSR'
+  rarity_display: string
+  description?: string
+  estimated_points: number
+  status: 'pending' | 'approved' | 'rejected' | 'offline'
+  status_display: string
+  inventory_stock: number
+  review_note: string
+  created_at: string
+  updated_at?: string
+}
+
+/** 库存信息 */
 export interface InventoryItem {
-  id: string
-  productId: string
-  productName: string
-  productImage: string
-  currentStock: number
-  stockStatus: 'normal' | 'low' | 'empty'
+  id: number
+  product: number
+  product_name: string
+  product_image: string
+  product_category: string
+  product_rarity: string
+  product_status: string
+  current_stock: number
+  updated_at: string
 }
 
+/** 库存变动记录 */
 export interface InventoryRecord {
-  id: string
-  productId: string
-  productName: string
+  id: number
+  product: number
+  product_name: string
   type: 'increase' | 'decrease' | 'modify'
-  beforeStock: number
-  afterStock: number
+  type_display: string
+  before_stock: number
+  after_stock: number
   reason: string
-  createdAt: string
+  created_at: string
 }
 
+/** 发货任务 */
 export interface ShipmentTask {
-  id: string
-  taskNo: string
-  productName: string
-  productImage: string
-  orderNo: string
-  receiverName: string
-  receiverPhone: string
-  receiverAddress: string
+  id: number
+  task_no: string
+  order_no: string
+  product: number
+  product_name: string
+  product_image: string
+  receiver_name: string
+  receiver_phone: string
+  receiver_address?: string
   status: 'pending' | 'shipped'
-  createdAt: string
-  shippedAt: string | null
-  logisticsCompany: string | null
-  trackingNo: string | null
+  status_display: string
+  logistics_company: string
+  tracking_no: string
+  shipped_at: string | null
+  created_at: string
+  updated_at?: string
 }
 
+/** 操作记录 */
 export interface MerchantRecord {
-  id: string
-  type: 'inventory' | 'shipment' | 'status_change'
-  productName: string
+  id: string | number
+  type: string
+  type_display: string
   description: string
-  detail: string
-  createdAt: string
+  created_at: string
+}
+
+/** 分页响应 */
+export interface PaginatedResponse<T> {
+  count: number
+  page: number
+  page_size: number
+  results: T[]
+}
+
+/** API 响应 */
+export interface ApiResponse<T> {
+  code: number
+  message: string
+  data: T
 }

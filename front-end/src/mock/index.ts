@@ -406,27 +406,31 @@ export function setupMock() {
 
   // Application
   mock.onGet('/merchant/api/application').reply(() => {
-    return [200, { code: 0, data: mockMerchantApplication, message: 'ok' }]
+    return [200, { code: 200, data: mockMerchantApplication, message: 'ok' }]
+  })
+
+  mock.onGet('/merchant/api/info').reply(() => {
+    return [200, { code: 200, data: mockMerchantApplication, message: 'ok' }]
   })
 
   mock.onPost('/merchant/api/application').reply(() => {
-    return [200, { code: 0, data: null, message: '申请已提交' }]
+    return [200, { code: 200, data: null, message: '申请已提交' }]
   })
 
   // Dashboard
   mock.onGet('/merchant/api/dashboard').reply(() => {
     return [200, {
-      code: 0,
+      code: 200,
       data: {
         totalProducts: mockMerchantProducts.length,
         pendingProducts: mockMerchantProducts.filter((p) => p.status === 'pending').length,
-        lowStockProducts: mockMerchantInventory.filter((i) => i.stockStatus === 'low' || i.stockStatus === 'empty').length,
+        lowStockProducts: mockMerchantInventory.filter((i) => i.current_stock < 10).length,
         pendingShipments: mockShipmentTasks.filter((s) => s.status === 'pending').length,
-        reviewStatus: 'approved',
+        totalStock: mockMerchantInventory.reduce((sum, i) => sum + i.current_stock, 0),
         todos: [
-          { id: 1, title: '审核中的商品「雷电将军手办」', type: 'product', link: '/products' },
-          { id: 2, title: '待发货任务 2 个', type: 'shipment', link: '/shipments' },
-          { id: 3, title: '库存预警：MOLLY-成都造型库存不足', type: 'stock', link: '/inventory' },
+          { id: 'pending_products', title: '审核中的商品「雷电将军手办」', link: '/products' },
+          { id: 'pending_shipments', title: '待发货任务 2 个', link: '/shipments' },
+          { id: 'low_stock', title: '库存预警：MOLLY-成都造型库存不足', link: '/inventory' },
         ],
       },
       message: 'ok',
@@ -435,82 +439,88 @@ export function setupMock() {
 
   // Products
   mock.onGet('/merchant/api/products').reply(() => {
-    return [200, { code: 0, data: mockMerchantProducts, message: 'ok' }]
+    return [200, { code: 200, data: { count: mockMerchantProducts.length, page: 1, page_size: 10, results: mockMerchantProducts }, message: 'ok' }]
   })
 
-  mock.onGet(/\/merchant\/api\/products\/[^/]+$/).reply((config) => {
-    const id = config.url?.split('/').pop()
+  mock.onGet(/\/merchant\/api\/products\/\d+$/).reply((config) => {
+    const id = Number(config.url?.split('/').pop())
     const p = mockMerchantProducts.find((x) => x.id === id)
-    return p ? [200, { code: 0, data: p, message: 'ok' }] : [404, { code: -1, data: null, message: '商品不存在' }]
+    return p ? [200, { code: 200, data: p, message: 'ok' }] : [404, { code: 404, data: null, message: '商品不存在' }]
   })
 
-  mock.onPost('/merchant/api/products').reply((config) => {
+  mock.onPost('/merchant/api/products/submit').reply((config) => {
     const data = JSON.parse(config.data)
+    const rarityMap: Record<string, string> = { N: '普通', R: '稀有', SR: '超稀有', SSR: '传说' }
     const newProduct = {
-      id: 'prod' + Date.now(),
+      id: Date.now(),
       ...data,
+      rarity_display: rarityMap[data.rarity as string] || data.rarity,
       status: 'pending',
-      reviewNote: '',
-      createdAt: new Date().toISOString().split('T')[0],
+      status_display: '待审核',
+      inventory_stock: 0,
+      review_note: '',
+      created_at: new Date().toISOString().split('T')[0],
     }
     mockMerchantProducts.push(newProduct)
-    return [200, { code: 0, data: newProduct, message: '提交成功，等待审核' }]
+    return [200, { code: 200, data: newProduct, message: '提交成功，等待审核' }]
   })
 
-  mock.onPut(/\/merchant\/api\/products\/[^/]+$/).reply((config) => {
-    const id = config.url?.split('/').pop()
+  mock.onPut(/\/merchant\/api\/products\/\d+\/edit$/).reply((config) => {
+    const id = Number(config.url?.split('/')[4])
     const data = JSON.parse(config.data)
     const p = mockMerchantProducts.find((x) => x.id === id)
     if (p) Object.assign(p, data)
-    return [200, { code: 0, data: null, message: '修改成功' }]
+    return [200, { code: 200, data: null, message: '修改成功' }]
   })
 
   // Inventory
   mock.onGet('/merchant/api/inventory').reply(() => {
-    return [200, { code: 0, data: mockMerchantInventory, message: 'ok' }]
+    return [200, { code: 200, data: { count: mockMerchantInventory.length, page: 1, page_size: 10, results: mockMerchantInventory }, message: 'ok' }]
   })
 
-  mock.onPut(/\/merchant\/api\/inventory\/[^/]+$/).reply((config) => {
-    const id = config.url?.split('/').pop()
-    const { stock } = JSON.parse(config.data)
-    const item = mockMerchantInventory.find((x) => x.productId === id)
+  mock.onPut(/\/merchant\/api\/inventory\/\d+$/).reply((config) => {
+    const id = Number(config.url?.split('/').pop())
+    const { change_type, quantity } = JSON.parse(config.data)
+    const item = mockMerchantInventory.find((x) => x.id === id)
     if (item) {
-      item.currentStock = stock
-      item.stockStatus = stock === 0 ? 'empty' : stock <= 5 ? 'low' : 'normal'
+      if (change_type === 'increase') item.current_stock += quantity
+      else if (change_type === 'decrease') item.current_stock = Math.max(0, item.current_stock - quantity)
+      else if (change_type === 'modify') item.current_stock = quantity
     }
-    return [200, { code: 0, data: null, message: '库存已更新' }]
+    return [200, { code: 200, data: null, message: '库存已更新' }]
   })
 
   mock.onGet('/merchant/api/inventory/records').reply(() => {
-    return [200, { code: 0, data: mockInventoryRecords, message: 'ok' }]
+    return [200, { code: 200, data: { count: mockInventoryRecords.length, page: 1, page_size: 10, results: mockInventoryRecords }, message: 'ok' }]
   })
 
   // Shipments
   mock.onGet('/merchant/api/shipments').reply(() => {
-    return [200, { code: 0, data: mockShipmentTasks, message: 'ok' }]
+    return [200, { code: 200, data: { count: mockShipmentTasks.length, page: 1, page_size: 10, results: mockShipmentTasks }, message: 'ok' }]
   })
 
-  mock.onGet(/\/merchant\/api\/shipments\/[^/]+$/).reply((config) => {
-    const id = config.url?.split('/').pop()
+  mock.onGet(/\/merchant\/api\/shipments\/\d+$/).reply((config) => {
+    const id = Number(config.url?.split('/').pop())
     const s = mockShipmentTasks.find((x) => x.id === id)
-    return s ? [200, { code: 0, data: s, message: 'ok' }] : [404, { code: -1, data: null, message: '任务不存在' }]
+    return s ? [200, { code: 200, data: s, message: 'ok' }] : [404, { code: 404, data: null, message: '任务不存在' }]
   })
 
-  mock.onPost(/\/merchant\/api\/shipments\/.*\/ship/).reply((config) => {
-    const id = config.url?.split('/')[4]
-    const { logisticsCompany, trackingNo } = JSON.parse(config.data)
+  mock.onPost(/\/merchant\/api\/shipments\/\d+\/ship$/).reply((config) => {
+    const id = Number(config.url?.split('/')[4])
+    const { logistics_company, tracking_no } = JSON.parse(config.data)
     const s = mockShipmentTasks.find((x) => x.id === id)
     if (s) {
       s.status = 'shipped'
-      s.logisticsCompany = logisticsCompany
-      s.trackingNo = trackingNo
-      s.shippedAt = new Date().toISOString()
+      s.status_display = '已发货'
+      s.logistics_company = logistics_company
+      s.tracking_no = tracking_no
+      s.shipped_at = new Date().toISOString()
     }
-    return [200, { code: 0, data: null, message: '发货成功' }]
+    return [200, { code: 200, data: null, message: '发货成功' }]
   })
 
   // Records
   mock.onGet('/merchant/api/records').reply(() => {
-    return [200, { code: 0, data: mockMerchantRecords, message: 'ok' }]
+    return [200, { code: 200, data: { count: mockMerchantRecords.length, page: 1, page_size: 10, results: mockMerchantRecords }, message: 'ok' }]
   })
 }

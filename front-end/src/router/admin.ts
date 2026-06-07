@@ -2,13 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
-    path: '/login',
+    path: '/',
     name: 'AdminLogin',
     component: () => import('@/views/admin/Login.vue'),
     meta: { noAuth: true },
   },
   {
-    path: '/',
+    path: '/dashboard',
     component: () => import('@/layouts/AdminLayout.vue'),
     children: [
       { path: '', name: 'Dashboard', component: () => import('@/views/admin/Dashboard.vue') },
@@ -37,7 +37,7 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('admin_token')
   if (!to.meta.noAuth && !token) {
-    next('/login')
+    next('/')
   } else {
     next()
   }

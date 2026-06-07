@@ -1,29 +1,42 @@
 import request from '../merchant-request'
 
-export function getMerchantProducts(params?: { status?: string; keyword?: string }) {
+/** 商品列表查询参数 */
+export interface ProductListParams {
+  page?: number
+  page_size?: number
+  status?: string
+  category?: string
+  rarity?: string
+  keyword?: string
+  order_by?: string
+}
+
+/** 商品提交参数 */
+export interface ProductSubmitData {
+  name: string
+  image: string
+  category: string
+  rarity: string
+  description?: string
+  estimated_points?: number
+}
+
+/** 商品列表 */
+export function getProductList(params?: ProductListParams) {
   return request.get('/products', { params })
 }
 
-export function getMerchantProductDetail(id: string) {
+/** 商品详情 */
+export function getProductDetail(id: number) {
   return request.get(`/products/${id}`)
 }
 
-export function submitProduct(data: {
-  name: string
-  image: string
-  description: string
-  category: string
-  rarity: string
-  stock: number
-}) {
-  return request.post('/products', data)
+/** 新增商品 */
+export function submitProduct(data: ProductSubmitData) {
+  return request.post('/products/submit', data)
 }
 
-export function updateProduct(id: string, data: {
-  name?: string
-  image?: string
-  description?: string
-  stock?: number
-}) {
-  return request.put(`/products/${id}`, data)
+/** 修改商品 */
+export function updateProduct(id: number, data: ProductSubmitData) {
+  return request.put(`/products/${id}/edit`, data)
 }

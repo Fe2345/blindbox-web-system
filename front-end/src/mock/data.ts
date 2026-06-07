@@ -295,69 +295,74 @@ export const mockLedger = [
 
 // ========== Merchant Self-Service Mock Data ==========
 
-import type { MerchantApplication, MerchantProduct, InventoryItem, InventoryRecord, ShipmentTask, MerchantRecord } from '@/types/merchant-self'
+import type { MerchantInfo, MerchantProduct, InventoryItem, InventoryRecord, ShipmentTask, MerchantRecord } from '@/types/merchant-self'
 
-export const mockMerchantApplication: MerchantApplication = {
-  id: 'app001',
-  merchantName: '潮玩优品',
-  contactName: '李明',
+export const mockMerchantApplication: MerchantInfo = {
+  id: 1,
+  username: 'merchant',
+  name: '潮玩优品',
+  contact_name: '李明',
   phone: '13900001111',
-  businessScope: '动漫周边、潮玩手办、IP联名产品',
-  supplyDescription: '专注原神、泡泡玛特等热门IP周边供货，品质优良，价格合理',
+  email: 'merchant@example.com',
+  license: '91110105MA01XXXX',
+  business_scope: '动漫周边、潮玩手办、IP联名产品',
+  supply_desc: '专注原神、泡泡玛特等热门IP周边供货，品质优良，价格合理',
   status: 'approved',
-  reviewNote: '资质齐全，审核通过',
-  createdAt: '2026-01-15',
-  reviewedAt: '2026-01-16',
+  status_display: '已通过',
+  credit_score: 100,
+  review_note: '资质齐全，审核通过',
+  created_at: '2026-01-15',
+  reviewed_at: '2026-01-16',
 }
 
 export const mockMerchantProducts: MerchantProduct[] = [
-  { id: 'prod001', name: '派蒙亚克力挂件', image: 'https://picsum.photos/seed/paimon/200/200', description: '原神派蒙造型亚克力挂件', category: '动漫IP', rarity: 'N', stock: 100, status: 'approved', reviewNote: '', createdAt: '2026-03-01' },
-  { id: 'prod002', name: '刻晴金属徽章', image: 'https://picsum.photos/seed/keqing/200/200', description: '原神刻晴限定金属徽章', category: '动漫IP', rarity: 'R', stock: 60, status: 'approved', reviewNote: '', createdAt: '2026-03-01' },
-  { id: 'prod003', name: 'MOLLY-成都造型', image: 'https://picsum.photos/seed/mollycd/200/200', description: '泡泡玛特MOLLY城市系列成都限定', category: '潮玩', rarity: 'SR', stock: 25, status: 'approved', reviewNote: '', createdAt: '2026-02-15' },
-  { id: 'prod004', name: '雷电将军手办', image: 'https://picsum.photos/seed/raiden/200/200', description: '原神雷电将军精致手办', category: '动漫IP', rarity: 'SR', stock: 15, status: 'pending', reviewNote: '', createdAt: '2026-05-18' },
-  { id: 'prod005', name: '钟离限定立牌', image: 'https://picsum.photos/seed/zhongli/200/200', description: '原神钟离限定亚克力立牌', category: '动漫IP', rarity: 'SSR', stock: 5, status: 'rejected', reviewNote: '图片不清晰，请重新上传高清图片', createdAt: '2026-05-10' },
+  { id: 1, name: '派蒙亚克力挂件', image: 'https://picsum.photos/seed/paimon/200/200', description: '原神派蒙造型亚克力挂件', category: '动漫IP', rarity: 'N', rarity_display: '普通', estimated_points: 100, status: 'approved', status_display: '已通过', inventory_stock: 100, review_note: '', created_at: '2026-03-01' },
+  { id: 2, name: '刻晴金属徽章', image: 'https://picsum.photos/seed/keqing/200/200', description: '原神刻晴限定金属徽章', category: '动漫IP', rarity: 'R', rarity_display: '稀有', estimated_points: 200, status: 'approved', status_display: '已通过', inventory_stock: 60, review_note: '', created_at: '2026-03-01' },
+  { id: 3, name: 'MOLLY-成都造型', image: 'https://picsum.photos/seed/mollycd/200/200', description: '泡泡玛特MOLLY城市系列成都限定', category: '潮玩', rarity: 'SR', rarity_display: '超稀有', estimated_points: 500, status: 'approved', status_display: '已通过', inventory_stock: 25, review_note: '', created_at: '2026-02-15' },
+  { id: 4, name: '雷电将军手办', image: 'https://picsum.photos/seed/raiden/200/200', description: '原神雷电将军精致手办', category: '动漫IP', rarity: 'SR', rarity_display: '超稀有', estimated_points: 800, status: 'pending', status_display: '待审核', inventory_stock: 15, review_note: '', created_at: '2026-05-18' },
+  { id: 5, name: '钟离限定立牌', image: 'https://picsum.photos/seed/zhongli/200/200', description: '原神钟离限定亚克力立牌', category: '动漫IP', rarity: 'SSR', rarity_display: '传说', estimated_points: 1000, status: 'rejected', status_display: '已驳回', inventory_stock: 5, review_note: '图片不清晰，请重新上传高清图片', created_at: '2026-05-10' },
 ]
 
 export const mockMerchantInventory: InventoryItem[] = [
-  { id: 'inv001', productId: 'prod001', productName: '派蒙亚克力挂件', productImage: 'https://picsum.photos/seed/paimon/200/200', currentStock: 100, stockStatus: 'normal' },
-  { id: 'inv002', productId: 'prod002', productName: '刻晴金属徽章', productImage: 'https://picsum.photos/seed/keqing/200/200', currentStock: 60, stockStatus: 'normal' },
-  { id: 'inv003', productId: 'prod003', productName: 'MOLLY-成都造型', productImage: 'https://picsum.photos/seed/mollycd/200/200', currentStock: 3, stockStatus: 'low' },
-  { id: 'inv004', productId: 'prod004', productName: '雷电将军手办', productImage: 'https://picsum.photos/seed/raiden/200/200', currentStock: 0, stockStatus: 'empty' },
+  { id: 1, product: 1, product_name: '派蒙亚克力挂件', product_image: 'https://picsum.photos/seed/paimon/200/200', product_category: '动漫IP', product_rarity: 'N', product_status: 'approved', current_stock: 100, updated_at: '2026-05-15' },
+  { id: 2, product: 2, product_name: '刻晴金属徽章', product_image: 'https://picsum.photos/seed/keqing/200/200', product_category: '动漫IP', product_rarity: 'R', product_status: 'approved', current_stock: 60, updated_at: '2026-05-14' },
+  { id: 3, product: 3, product_name: 'MOLLY-成都造型', product_image: 'https://picsum.photos/seed/mollycd/200/200', product_category: '潮玩', product_rarity: 'SR', product_status: 'approved', current_stock: 3, updated_at: '2026-05-12' },
+  { id: 4, product: 4, product_name: '雷电将军手办', product_image: 'https://picsum.photos/seed/raiden/200/200', product_category: '动漫IP', product_rarity: 'SR', product_status: 'pending', current_stock: 0, updated_at: '2026-05-10' },
 ]
 
 export const mockInventoryRecords: InventoryRecord[] = [
-  { id: 'ir001', productId: 'prod001', productName: '派蒙亚克力挂件', type: 'increase', beforeStock: 80, afterStock: 100, reason: '补货入库', createdAt: '2026-05-15T10:00:00' },
-  { id: 'ir002', productId: 'prod002', productName: '刻晴金属徽章', type: 'decrease', beforeStock: 65, afterStock: 60, reason: '发放消耗', createdAt: '2026-05-14T14:30:00' },
-  { id: 'ir003', productId: 'prod003', productName: 'MOLLY-成都造型', type: 'decrease', beforeStock: 10, afterStock: 3, reason: '发放消耗', createdAt: '2026-05-12T09:00:00' },
-  { id: 'ir004', productId: 'prod004', productName: '雷电将军手办', type: 'modify', beforeStock: 15, afterStock: 0, reason: '盘点调整', createdAt: '2026-05-10T16:00:00' },
+  { id: 1, product: 1, product_name: '派蒙亚克力挂件', type: 'increase', type_display: '入库', before_stock: 80, after_stock: 100, reason: '补货入库', created_at: '2026-05-15T10:00:00' },
+  { id: 2, product: 2, product_name: '刻晴金属徽章', type: 'decrease', type_display: '出库', before_stock: 65, after_stock: 60, reason: '发放消耗', created_at: '2026-05-14T14:30:00' },
+  { id: 3, product: 3, product_name: 'MOLLY-成都造型', type: 'decrease', type_display: '出库', before_stock: 10, after_stock: 3, reason: '发放消耗', created_at: '2026-05-12T09:00:00' },
+  { id: 4, product: 4, product_name: '雷电将军手办', type: 'modify', type_display: '调整', before_stock: 15, after_stock: 0, reason: '盘点调整', created_at: '2026-05-10T16:00:00' },
 ]
 
 export const mockShipmentTasks: ShipmentTask[] = [
   {
-    id: 'sh001', taskNo: 'SH20260515001', productName: '创意马克杯', productImage: 'https://picsum.photos/seed/mug/200/200',
-    orderNo: 'ORD20260515001', receiverName: '张三', receiverPhone: '13800138000',
-    receiverAddress: '北京市朝阳区某某路123号', status: 'pending',
-    createdAt: '2026-05-15T10:00:00', shippedAt: null, logisticsCompany: null, trackingNo: null,
+    id: 1, task_no: 'SH20260515001', product_name: '创意马克杯', product_image: 'https://picsum.photos/seed/mug/200/200',
+    order_no: 'ORD20260515001', receiver_name: '张三', receiver_phone: '13800138000',
+    receiver_address: '北京市朝阳区某某路123号', status: 'pending', status_display: '待发货',
+    created_at: '2026-05-15T10:00:00', shipped_at: null, logistics_company: '', tracking_no: '', product: 1,
   },
   {
-    id: 'sh002', taskNo: 'SH20260510001', productName: 'MOLLY-成都造型', productImage: 'https://picsum.photos/seed/mollycd/200/200',
-    orderNo: 'ORD20260510001', receiverName: '李四', receiverPhone: '13800138001',
-    receiverAddress: '上海市浦东新区某某大道456号', status: 'pending',
-    createdAt: '2026-05-10T08:00:00', shippedAt: null, logisticsCompany: null, trackingNo: null,
+    id: 2, task_no: 'SH20260510001', product_name: 'MOLLY-成都造型', product_image: 'https://picsum.photos/seed/mollycd/200/200',
+    order_no: 'ORD20260510001', receiver_name: '李四', receiver_phone: '13800138001',
+    receiver_address: '上海市浦东新区某某大道456号', status: 'pending', status_display: '待发货',
+    created_at: '2026-05-10T08:00:00', shipped_at: null, logistics_company: '', tracking_no: '', product: 3,
   },
   {
-    id: 'sh003', taskNo: 'SH20260428001', productName: '智能保温杯', productImage: 'https://picsum.photos/seed/thermos/200/200',
-    orderNo: 'ORD20260428001', receiverName: '张三', receiverPhone: '13800138000',
-    receiverAddress: '北京市朝阳区某某路123号', status: 'shipped',
-    createdAt: '2026-04-28T14:00:00', shippedAt: '2026-04-29T09:00:00', logisticsCompany: '顺丰速运', trackingNo: 'SF1234567890',
+    id: 3, task_no: 'SH20260428001', product_name: '智能保温杯', product_image: 'https://picsum.photos/seed/thermos/200/200',
+    order_no: 'ORD20260428001', receiver_name: '张三', receiver_phone: '13800138000',
+    receiver_address: '北京市朝阳区某某路123号', status: 'shipped', status_display: '已发货',
+    created_at: '2026-04-28T14:00:00', shipped_at: '2026-04-29T09:00:00', logistics_company: '顺丰速运', tracking_no: 'SF1234567890', product: 2,
   },
 ]
 
 export const mockMerchantRecords: MerchantRecord[] = [
-  { id: 'mr001', type: 'inventory', productName: '派蒙亚克力挂件', description: '库存增加', detail: '补货入库 80 → 100', createdAt: '2026-05-15T10:00:00' },
-  { id: 'mr002', type: 'shipment', productName: '创意马克杯', description: '用户申请发货', detail: '订单 ORD20260515001 待发货', createdAt: '2026-05-15T10:00:00' },
-  { id: 'mr003', type: 'inventory', productName: '刻晴金属徽章', description: '库存减少', detail: '发放消耗 65 → 60', createdAt: '2026-05-14T14:30:00' },
-  { id: 'mr004', type: 'status_change', productName: '雷电将军手办', description: '商品提交审核', detail: '状态：草稿 → 待审核', createdAt: '2026-05-13T09:00:00' },
-  { id: 'mr005', type: 'shipment', productName: '智能保温杯', description: '确认发货', detail: '顺丰速运 SF1234567890', createdAt: '2026-04-29T09:00:00' },
-  { id: 'mr006', type: 'status_change', productName: '钟离限定立牌', description: '商品审核驳回', detail: '驳回原因：图片不清晰', createdAt: '2026-05-11T11:00:00' },
+  { id: 'mr001', type: 'inventory', type_display: '库存', description: '库存增加 - 补货入库 80 → 100', created_at: '2026-05-15T10:00:00' },
+  { id: 'mr002', type: 'shipment', type_display: '发货', description: '用户申请发货 - 订单 ORD20260515001 待发货', created_at: '2026-05-15T10:00:00' },
+  { id: 'mr003', type: 'inventory', type_display: '库存', description: '库存减少 - 发放消耗 65 → 60', created_at: '2026-05-14T14:30:00' },
+  { id: 'mr004', type: 'product', type_display: '商品', description: '商品提交审核 - 状态：草稿 → 待审核', created_at: '2026-05-13T09:00:00' },
+  { id: 'mr005', type: 'shipment', type_display: '发货', description: '确认发货 - 顺丰速运 SF1234567890', created_at: '2026-04-29T09:00:00' },
+  { id: 'mr006', type: 'product_review', type_display: '商品审核', description: '商品审核驳回 - 驳回原因：图片不清晰', created_at: '2026-05-11T11:00:00' },
 ]

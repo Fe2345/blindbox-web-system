@@ -15,11 +15,17 @@
         <el-option label="已驳回" value="rejected" />
         <el-option label="已下架" value="offline" />
       </el-select>
+      <el-select v-model="rarityFilter" placeholder="稀有度" clearable style="width: 120px" @change="loadData">
+        <el-option label="N" value="N" />
+        <el-option label="R" value="R" />
+        <el-option label="SR" value="SR" />
+        <el-option label="SSR" value="SSR" />
+      </el-select>
       <el-button @click="loadData">查询</el-button>
     </div>
 
     <el-card>
-      <el-table :data="filtered" v-loading="loading" stripe>
+      <el-table :data="productStore.list" v-loading="productStore.loading" stripe>
         <el-table-column label="商品图片" width="80">
           <template #default="{ row }">
             <el-image :src="row.image" style="width: 50px; height: 50px; border-radius: 4px" fit="cover" />
@@ -29,46 +35,70 @@
         <el-table-column prop="category" label="分类" width="80" />
         <el-table-column label="稀有度" width="80">
           <template #default="{ row }">
-            <span :style="{ color: rarityColor(row.rarity), fontWeight: 600 }">{{ rarityLabel(row.rarity) }}</span>
+            <span :style="{ color: rarityColor(row.rarity), fontWeight: 600 }">{{ row.rarity_display }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="stock" label="库存" width="70" />
+        <el-table-column prop="inventory_stock" label="库存" width="70" />
+        <el-table-column prop="estimated_points" label="预估积分" width="90" />
         <el-table-column label="审核状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="productStatusType(row.status)" size="small">{{ productStatusLabel(row.status) }}</el-tag>
+            <el-tag :type="productStatusType(row.status)" size="small">{{ row.status_display }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="提交时间" width="110" />
+        <el-table-column prop="created_at" label="提交时间" width="110" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="viewDetail(row)">详情</el-button>
-            <el-button link type="primary" size="small" @click="router.push(`/products/edit/${row.id}`)">修改</el-button>
+            <el-button
+              v-if="row.status === 'pending' || row.status === 'rejected'"
+              link type="primary" size="small"
+              @click="router.push(`/products/edit/${row.id}`)"
+            >修改</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-bar" v-if="productStore.total > 0">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="productStore.total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next"
+          @current-change="loadData"
+          @size-change="loadData"
+        />
+      </div>
     </el-card>
 
+    <!-- 商品详情弹窗 -->
     <el-dialog v-model="detailVisible" title="商品详情" width="500px">
       <el-descriptions :column="1" border v-if="currentProduct">
         <el-descriptions-item label="商品名称">{{ currentProduct.name }}</el-descriptions-item>
         <el-descriptions-item label="分类">{{ currentProduct.category }}</el-descriptions-item>
         <el-descriptions-item label="稀有度">
-          <span :style="{ color: rarityColor(currentProduct.rarity), fontWeight: 600 }">{{ rarityLabel(currentProduct.rarity) }}</span>
+          <span :style="{ color: rarityColor(currentProduct.rarity), fontWeight: 600 }">{{ currentProduct.rarity_display }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="库存">{{ currentProduct.stock }}</el-descriptions-item>
+        <el-descriptions-item label="库存">{{ currentProduct.inventory_stock }}</el-descriptions-item>
+        <el-descriptions-item label="预估积分">{{ currentProduct.estimated_points }}</el-descriptions-item>
         <el-descriptions-item label="审核状态">
-          <el-tag :type="productStatusType(currentProduct.status)">{{ productStatusLabel(currentProduct.status) }}</el-tag>
+          <el-tag :type="productStatusType(currentProduct.status)">{{ currentProduct.status_display }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="商品描述">{{ currentProduct.description }}</el-descriptions-item>
-        <el-descriptions-item label="提交时间">{{ currentProduct.createdAt }}</el-descriptions-item>
+        <el-descriptions-item label="商品描述">{{ currentProduct.description || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="提交时间">{{ currentProduct.created_at }}</el-descriptions-item>
       </el-descriptions>
-      <el-alert v-if="currentProduct?.status === 'rejected' && currentProduct.reviewNote" :title="'驳回原因：' + currentProduct.reviewNote" type="error" show-icon :closable="false" style="margin-top: 12px" />
+      <el-alert
+        v-if="currentProduct?.status === 'rejected' && currentProduct.review_note"
+        :title="'驳回原因：' + currentProduct.review_note"
+        type="error" show-icon :closable="false"
+        style="margin-top: 12px"
+      />
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMerchantProductStore } from '@/stores/merchant/product'
 import { Plus } from '@element-plus/icons-vue'
@@ -76,32 +106,17 @@ import type { MerchantProduct } from '@/types/merchant-self'
 
 const router = useRouter()
 const productStore = useMerchantProductStore()
-const loading = ref(false)
 const keyword = ref('')
 const statusFilter = ref('')
+const rarityFilter = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 const detailVisible = ref(false)
 const currentProduct = ref<MerchantProduct | null>(null)
-
-const filtered = computed(() => {
-  let list = productStore.list
-  if (statusFilter.value) list = list.filter((p) => p.status === statusFilter.value)
-  if (keyword.value) list = list.filter((p) => p.name.includes(keyword.value))
-  return list
-})
-
-function rarityLabel(r: string) {
-  const map: Record<string, string> = { N: '普通', R: '稀有', SR: '超稀有', SSR: '传说' }
-  return map[r] || r
-}
 
 function rarityColor(r: string) {
   const map: Record<string, string> = { N: '#909399', R: '#409EFF', SR: '#E6A23C', SSR: '#F56C6C' }
   return map[r] || '#909399'
-}
-
-function productStatusLabel(s: string) {
-  const map: Record<string, string> = { pending: '待审核', approved: '审核通过', rejected: '审核驳回', offline: '已下架' }
-  return map[s] || s
 }
 
 function productStatusType(s: string) {
@@ -115,10 +130,27 @@ function viewDetail(row: MerchantProduct) {
 }
 
 async function loadData() {
-  loading.value = true
-  await productStore.fetchList()
-  loading.value = false
+  await productStore.fetchList({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    status: statusFilter.value || undefined,
+    rarity: rarityFilter.value || undefined,
+    keyword: keyword.value || undefined,
+  })
 }
 
 onMounted(() => loadData())
 </script>
+
+<style scoped>
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pagination-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

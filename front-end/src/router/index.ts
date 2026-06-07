@@ -2,10 +2,36 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
-    path: '/login',
-    name: 'Login',
+    path: '/',
+    name: 'Entry',
+    component: () => import('@/views/Entry.vue'),
+    meta: { noAuth: true },
+  },
+  {
+    path: '/user-login',
+    name: 'UserLogin',
     component: () => import('@/views/user/Login.vue'),
     meta: { noAuth: true },
+  },
+  {
+    path: '/merchant-login',
+    name: 'MerchantLoginRedirect',
+    beforeEnter() {
+      window.location.href = '/merchant.html'
+    },
+    meta: { noAuth: true },
+  },
+  {
+    path: '/admin-login',
+    name: 'AdminLoginRedirect',
+    beforeEnter() {
+      window.location.href = '/admin.html'
+    },
+    meta: { noAuth: true },
+  },
+  {
+    path: '/login',
+    redirect: '/user-login',
   },
   {
     path: '/register',
@@ -14,7 +40,7 @@ const routes = [
     meta: { noAuth: true },
   },
   {
-    path: '/',
+    path: '/home',
     component: () => import('@/layouts/UserLayout.vue'),
     children: [
       { path: '', name: 'Home', component: () => import('@/views/user/Home.vue') },
@@ -42,7 +68,7 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
   if (!to.meta.noAuth && !token) {
-    next('/login')
+    next('/user-login')
   } else {
     next()
   }

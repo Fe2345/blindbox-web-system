@@ -1,6 +1,8 @@
 import logging
 
+from django.contrib.auth import authenticate
 from django.db.models import Q
+from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAuthenticated
@@ -10,6 +12,36 @@ from .models import Address, Division
 from .serializers import AddressSerializer, AddressWriteSerializer, DivisionSerializer
 
 logger = logging.getLogger("blindbox")
+
+
+class LoginView(APIView):
+    """用户登录"""
+
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if not username or not password:
+            return error(message="请输入用户名和密码", code=400)
+
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return error(message="用户名或密码错误", code=401)
+
+        if not user.is_active:
+            return error(message="账号已被禁用", code=403)
+
+        token, _ = Token.objects.get_or_create(user=user)
+        logger.info(f"用户登录: {username}")
+
+        return success(data={
+            "token": token.key,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "role": getattr(user, "role", "user"),
+            },
+        })
 
 
 class DivisionListView(APIView):

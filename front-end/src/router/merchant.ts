@@ -2,13 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
-    path: '/login',
+    path: '/',
     name: 'MerchantLogin',
     component: () => import('@/views/merchant/Login.vue'),
     meta: { noAuth: true },
   },
   {
-    path: '/',
+    path: '/dashboard',
     component: () => import('@/layouts/MerchantLayout.vue'),
     children: [
       { path: '', name: 'MerchantDashboard', component: () => import('@/views/merchant/Dashboard.vue') },
@@ -32,7 +32,7 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('merchant_token')
   if (!to.meta.noAuth && !token) {
-    next('/login')
+    next('/')
   } else {
     next()
   }

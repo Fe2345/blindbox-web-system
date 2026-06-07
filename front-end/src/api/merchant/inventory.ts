@@ -1,13 +1,42 @@
 import request from '../merchant-request'
 
-export function getInventoryList() {
-  return request.get('/inventory')
+/** 库存列表查询参数 */
+export interface InventoryListParams {
+  page?: number
+  page_size?: number
+  keyword?: string
+  stock_status?: string
+  order_by?: string
 }
 
-export function updateStock(productId: string, stock: number) {
-  return request.put(`/inventory/${productId}`, { stock })
+/** 库存修改参数 */
+export interface InventoryUpdateData {
+  change_type: 'increase' | 'decrease' | 'modify'
+  quantity: number
+  reason?: string
 }
 
-export function getInventoryRecords(productId?: string) {
-  return request.get('/inventory/records', { params: { productId } })
+/** 库存记录查询参数 */
+export interface InventoryRecordParams {
+  page?: number
+  page_size?: number
+  product_id?: number
+  type?: string
+  start_date?: string
+  end_date?: string
+}
+
+/** 库存列表 */
+export function getInventoryList(params?: InventoryListParams) {
+  return request.get('/inventory', { params })
+}
+
+/** 修改库存 */
+export function updateInventory(id: number, data: InventoryUpdateData) {
+  return request.put(`/inventory/${id}`, data)
+}
+
+/** 库存变动记录 */
+export function getInventoryRecords(params?: InventoryRecordParams) {
+  return request.get('/inventory/records', { params })
 }
