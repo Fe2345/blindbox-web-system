@@ -68,18 +68,7 @@ system/
 
 ### 2. 启动数据库
 
-```bash
-# 启动 MariaDB（端口 3306）
-docker run -d --name mariadb \
-  -e MARIADB_ROOT_PASSWORD=root123 \
-  -p 3306:3306 \
-  mariadb:11.8
-
-# 启动 Redis（端口 6379）
-docker run -d --name redis \
-  -p 6379:6379 \
-  redis:7-alpine
-```
+略
 
 ### 3. 配置环境变量
 
@@ -88,7 +77,7 @@ docker run -d --name redis \
 cp .env.example .env
 ```
 
-按需修改 `.env` 中的配置项，特别是数据库密码 `DB_PASSWORD` 和 `DJANGO_SECRET_KEY`。
+按需修改 `.env` 中的配置项，特别是数据库密码 `DB_PASSWORD` 和 `DJANGO_SECRET_KEY`，并按照使用的Python虚拟环境调整。选择uv则可以保持不变，使用conda则需要设置`VENV_TYPE=conda`并在`CONDA_VENV_NAME`填写装有django的环境名
 
 ### 4. 导入数据（可选）
 
@@ -101,6 +90,8 @@ mariadb -h 127.0.0.1 -P 3306 -u root -proot123 blindbox < scripts/data.sql
 ```
 
 > `data.sql` 使用 `REPLACE INTO` 语法，可重复导入覆盖数据而不报主键冲突。
+
+> mariadb和MySQL语法几乎一致，如果安装的是MySQL只需要把mariadb替换为mysql即可
 
 ### 5. 启动服务
 
