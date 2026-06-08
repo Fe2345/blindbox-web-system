@@ -14,6 +14,7 @@
       <el-date-picker
         v-model="dateRange"
         type="daterange"
+        value-format="YYYY-MM-DD"
         range-separator="至"
         start-placeholder="开始日期"
         end-placeholder="结束日期"
@@ -47,7 +48,7 @@ const recordStore = useMerchantRecordStore()
 const loading = ref(false)
 const keyword = ref('')
 const typeFilter = ref('')
-const dateRange = ref<[Date, Date] | null>(null)
+const dateRange = ref<[string, string] | null>(null)
 
 const filtered = computed(() => recordStore.list)
 

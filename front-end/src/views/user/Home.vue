@@ -110,6 +110,8 @@ import { useBlindBoxStore } from '@/stores/blindbox'
 import { useExchangeStore } from '@/stores/exchange'
 import { Box, Present, Switch, Document } from '@element-plus/icons-vue'
 import { rarityLabel, rarityColor } from '@/utils/format'
+import type { BlindBox } from '@/types/blindbox'
+import type { ExchangePost } from '@/types/exchange'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -118,8 +120,8 @@ const exchangeStore = useExchangeStore()
 
 const pendingOrders = ref(0)
 const pendingExchange = ref(0)
-const hotBoxes = ref<any[]>([])
-const exchangePosts = ref<any[]>([])
+const hotBoxes = ref<BlindBox[]>([])
+const exchangePosts = ref<ExchangePost[]>([])
 
 const carouselItems = [
   { title: '原神角色盲盒', desc: '原神人气角色周边，限定挂件、立牌、手办等你来抽', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/blindbox/bb001' },
