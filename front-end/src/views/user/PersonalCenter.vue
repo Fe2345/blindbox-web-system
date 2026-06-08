@@ -9,9 +9,22 @@
       <el-tab-pane label="基本资料" name="profile">
         <el-card style="max-width: 600px">
           <div class="avatar-section">
-            <el-avatar :size="80" :src="profileForm.avatar || undefined">
-              {{ profileForm.username?.charAt(0) }}
-            </el-avatar>
+            <div class="avatar-wrapper" @click="handleAvatarClick" :class="{ uploading: uploadingAvatar }">
+              <el-avatar :size="80" :src="profileForm.avatar || undefined">
+                {{ profileForm.username?.charAt(0) }}
+              </el-avatar>
+              <div class="avatar-overlay">
+                <span v-if="uploadingAvatar">上传中...</span>
+                <span v-else>更换头像</span>
+              </div>
+            </div>
+            <input
+              ref="avatarInputRef"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleAvatarChange"
+            />
           </div>
           <el-form :model="profileForm" label-width="80px" style="margin-top: 20px">
             <el-form-item label="用户名">
@@ -140,7 +153,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { getDivisions, changePassword } from '@/api/user'
+import { getDivisions, changePassword, uploadAvatar } from '@/api/user'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import type { Address } from '@/types/user'
@@ -187,6 +200,9 @@ const addressRules = {
   detail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
 }
 
+const uploadingAvatar = ref(false)
+const avatarInputRef = ref<HTMLInputElement>()
+
 const provinces = ref<DivisionOption[]>([])
 const cities = ref<DivisionOption[]>([])
 const districts = ref<DivisionOption[]>([])
@@ -222,6 +238,44 @@ async function handleSaveProfile() {
     else ElMessage.error(res.message)
   } finally {
     saving.value = false
+  }
+}
+
+function handleAvatarClick() {
+  avatarInputRef.value?.click()
+}
+
+async function handleAvatarChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowed.includes(file.type)) {
+    ElMessage.error('仅支持 JPG、PNG、GIF、WebP 格式')
+    input.value = ''
+    return
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.error('文件大小不能超过 2MB')
+    input.value = ''
+    return
+  }
+
+  uploadingAvatar.value = true
+  try {
+    const res: any = await uploadAvatar(file)
+    if (res.code === 200) {
+      profileForm.avatar = res.data.avatar
+      if (userStore.userInfo) userStore.userInfo.avatar = res.data.avatar
+      ElMessage.success('头像上传成功')
+    } else {
+      ElMessage.error(res.message)
+    }
+  } finally {
+    uploadingAvatar.value = false
+    input.value = ''
   }
 }
 
@@ -346,6 +400,33 @@ onMounted(async () => {
 <style scoped>
 .avatar-section {
   text-align: center;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-wrapper .avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-wrapper:hover .avatar-overlay,
+.avatar-wrapper.uploading .avatar-overlay {
+  opacity: 1;
 }
 
 .address-card {

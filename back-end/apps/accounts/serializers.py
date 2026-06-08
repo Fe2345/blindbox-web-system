@@ -87,6 +87,7 @@ class LoginSerializer(serializers.Serializer):
 class UserInfoSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=150, required=False)
     phone = serializers.CharField(max_length=11, required=False)
+    avatar = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
     def validate_username(self, value):
         user = self.context["request"].user
