@@ -2,7 +2,9 @@ import re
 
 from rest_framework import serializers
 
-from .models import Address, Division
+from apps.common.utils import keys_to_camel, keys_to_snake
+
+from .models import Address, Division, User
 
 
 class DivisionSerializer(serializers.ModelSerializer):
@@ -27,6 +29,9 @@ class AddressSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def to_representation(self, instance):
+        return keys_to_camel(super().to_representation(instance))
+
 
 class AddressWriteSerializer(serializers.Serializer):
     """地址写入序列化器"""
@@ -39,6 +44,9 @@ class AddressWriteSerializer(serializers.Serializer):
     street = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
     detail = serializers.CharField(max_length=200)
     is_default = serializers.BooleanField(default=False)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
 
     def validate_receiver_phone(self, value):
         if not re.match(r"^1[3-9]\d{9}$", value):
@@ -53,3 +61,67 @@ class AddressWriteSerializer(serializers.Serializer):
             if code not in found:
                 raise serializers.ValidationError(f"行政区划代码 {code} 不存在")
         return attrs
+
+
+class RegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150)
+    phone = serializers.CharField(max_length=11)
+    password = serializers.CharField(min_length=6, max_length=128)
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("用户名已存在")
+        return value
+
+    def validate_phone(self, value):
+        if not re.match(r"^1[3-9]\d{9}$", value):
+            raise serializers.ValidationError("请输入有效的 11 位手机号")
+        return value
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+
+class UserInfoSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150, required=False)
+    phone = serializers.CharField(max_length=11, required=False)
+    avatar = serializers.CharField(max_length=500, required=False, allow_blank=True)
+
+    def validate_username(self, value):
+        user = self.context["request"].user
+        if User.objects.filter(username=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("用户名已存在")
+        return value
+
+    def validate_phone(self, value):
+        if not re.match(r"^1[3-9]\d{9}$", value):
+            raise serializers.ValidationError("请输入有效的 11 位手机号")
+        return value
+
+
+# ==================== 管理端 ====================
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """用户列表序列化器（管理端）"""
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "phone", "role", "is_active", "date_joined", "last_login"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data = keys_to_camel(data)
+        data["avatar"] = instance.avatar
+        return data
+
+
+class AdminUserStatusSerializer(serializers.Serializer):
+    """用户状态切换序列化器"""
+
+    is_active = serializers.BooleanField()
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))

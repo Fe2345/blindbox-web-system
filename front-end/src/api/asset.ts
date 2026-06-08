@@ -12,6 +12,18 @@ export function recycleAsset(id: string) {
   return request.post(`/assets/${id}/recycle`)
 }
 
+export interface BulkRecyclePayload {
+  assetIds?: string[]
+  rarities?: string[]
+  productName?: string
+  keepOneByProduct?: boolean
+  sourceBatchNo?: string
+}
+
+export function bulkRecycleAssets(data: BulkRecyclePayload) {
+  return request.post('/assets/bulk-recycle', data)
+}
+
 export function shipAsset(id: string) {
   return request.post(`/assets/${id}/ship`)
 }

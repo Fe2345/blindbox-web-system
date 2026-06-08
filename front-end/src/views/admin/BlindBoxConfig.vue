@@ -10,7 +10,7 @@
       <el-table-column prop="name" label="盲盒名称" width="160" />
       <el-table-column prop="category" label="分类" width="100" />
       <el-table-column label="消耗积分" width="100"><template #default="{ row }">{{ row.costPoints }}</template></el-table-column>
-      <el-table-column label="库存" width="80"><template #default="{ row }">{{ row.stock }}</template></el-table-column>
+      <el-table-column label="剩余库存" width="100"><template #default="{ row }">{{ row.prizes.reduce((s: number, p: any) => s + p.remainingQuantity, 0) }}</template></el-table-column>
       <el-table-column label="奖品数" width="80"><template #default="{ row }">{{ row.prizes.length }}</template></el-table-column>
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
@@ -35,12 +35,12 @@
         <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
         <el-form-item label="消耗积分"><el-input-number v-model="form.costPoints" :min="1" /></el-form-item>
-        <el-form-item label="库存"><el-input-number v-model="form.stock" :min="0" /></el-form-item>
+        <el-form-item label="最大抽取次数"><el-input-number v-model="form.maxDrawCount" :min="1" /></el-form-item>
         <el-form-item label="活动时间"><el-date-picker v-model="form.dateRange" type="daterange" range-separator="至" start-placeholder="开始" end-placeholder="结束" style="width: 100%" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">保存</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -54,14 +54,36 @@ import { ElMessage } from 'element-plus'
 const blindBoxStore = useBlindBoxStore()
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ name: '', category: '', description: '', costPoints: 100, stock: 0, dateRange: null })
+const form = ref({ id: '', name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
 
-function showAdd() { isEdit.value = false; form.value = { name: '', category: '', description: '', costPoints: 100, stock: 0, dateRange: null }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { id: '', name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row, dateRange: null }; dialogVisible.value = true }
+async function handleSave() {
+  if (!form.value.name || !form.value.category) {
+    ElMessage.warning('请填写盲盒名称和分类')
+    return
+  }
+  const payload = {
+    ...form.value,
+    startTime: form.value.dateRange?.[0] || null,
+    endTime: form.value.dateRange?.[1] || null,
+  }
+  delete payload.dateRange
+  let res
+  if (isEdit.value) {
+    res = await blindBoxStore.update(form.value.id, payload)
+  } else {
+    res = await blindBoxStore.save(payload)
+  }
+  if (res.code === 200) {
+    ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
+    dialogVisible.value = false
+  }
+}
 
 async function handleToggle(id: string, status: string) {
   const res = await blindBoxStore.updateStatus(id, status)
-  if (res.code === 0) ElMessage.success(status === 'active' ? '已上架' : '已下架')
+  if (res.code === 200) ElMessage.success(status === 'active' ? '已上架' : '已下架')
 }
 
 onMounted(() => blindBoxStore.fetchList())

@@ -111,15 +111,13 @@ async function handleUpdate() {
   submitting.value = true
   try {
     const res: any = await inventoryStore.updateStock(currentItem.value.productId, newStock.value)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('库存已更新')
       updateVisible.value = false
       inventoryStore.fetchList()
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('更新失败')
   } finally {
     submitting.value = false
   }

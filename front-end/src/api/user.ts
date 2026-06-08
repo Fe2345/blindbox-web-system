@@ -1,33 +1,57 @@
 import request from './request'
 
 export function login(data: { username: string; password: string }) {
-  return request.post('/login', data)
+  return request.post('/login/', data)
 }
 
 export function register(data: { username: string; phone: string; password: string }) {
-  return request.post('/register', data)
+  return request.post('/register/', data)
 }
 
 export function getUserInfo() {
-  return request.get('/user/info')
+  return request.get('/user/info/')
 }
 
 export function updateUserInfo(data: { username?: string; phone?: string; avatar?: string }) {
-  return request.put('/user/info', data)
+  return request.put('/user/info/', data)
 }
 
 export function getAddresses() {
-  return request.get('/user/addresses')
+  return request.get('/user/addresses/')
 }
 
 export function addAddress(data: any) {
-  return request.post('/user/addresses', data)
+  return request.post('/user/addresses/', data)
 }
 
 export function updateAddress(id: string, data: any) {
-  return request.put(`/user/addresses/${id}`, data)
+  return request.put(`/user/addresses/${id}/`, data)
 }
 
 export function deleteAddress(id: string) {
-  return request.delete(`/user/addresses/${id}`)
+  return request.delete(`/user/addresses/${id}/`)
+}
+
+export function logout() {
+  return request.post('/logout/')
+}
+
+export function refreshToken() {
+  return request.post('/token/refresh/', {})
+}
+
+export function changePassword(data: { oldPassword: string; newPassword: string }) {
+  return request.post('/user/change-password/', data)
+}
+
+export function uploadAvatar(file: File) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  return request.post('/user/avatar/', formData)
+}
+
+export function getDivisions(parentCode?: string) {
+  const params: Record<string, string> = {}
+  if (parentCode) params.parent_code = parentCode
+  return request.get('/divisions/', { params })
 }

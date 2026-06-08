@@ -9,7 +9,9 @@ import router from './router/merchant'
 import { setupMock } from './mock'
 import './styles/merchant.css'
 
-setupMock()
+if (import.meta.env.VITE_USE_MOCK === 'true') {
+  setupMock()
+}
 
 const app = createApp(MerchantApp)
 

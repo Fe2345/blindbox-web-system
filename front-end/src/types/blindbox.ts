@@ -3,12 +3,15 @@ export interface BlindBox {
   name: string
   cover: string
   description: string
-  costPoints: number
-  stock: number
-  status: 'active' | 'low_stock' | 'ended'
   category: string
+  ipName: string
+  costPoints: number
+  status: 'active' | 'inactive' | 'ended'
   startTime: string
   endTime: string
+  maxDrawCount: number
+  allowSimulation: boolean
+  sortOrder: number
   prizes: BlindBoxPrize[]
 }
 
@@ -18,11 +21,16 @@ export interface BlindBoxPrize {
   image: string
   rarity: 'N' | 'R' | 'SR' | 'SSR'
   probability: number
-  stock: number
+  weight: number
+  quantity: number
+  remainingQuantity: number
+  isActive: boolean
+  ipNameSnapshot: string
 }
 
 export interface DrawResult {
   id: string
+  assetId: string
   prizeId: string
   prizeName: string
   prizeImage: string
@@ -31,7 +39,20 @@ export interface DrawResult {
   blindBoxName: string
   costPoints: number
   remainingPoints: number
+  batchNo: string
+  drawType: 'real' | 'simulation'
+  drawStatus: 'success' | 'failed'
   drawTime: string
+}
+
+export interface DrawBatchResult {
+  batchNo: string
+  count: number
+  totalCostPoints: number
+  remainingPoints: number
+  blindBoxId: string
+  blindBoxName: string
+  results: DrawResult[]
 }
 
 export interface AdminBlindBox {
@@ -40,11 +61,14 @@ export interface AdminBlindBox {
   cover: string
   description: string
   category: string
+  ipName: string
   costPoints: number
-  stock: number
   status: 'active' | 'inactive' | 'ended'
   startTime: string
   endTime: string
+  maxDrawCount: number
+  allowSimulation: boolean
+  sortOrder: number
   prizes: AdminPrize[]
   createdAt: string
 }
@@ -56,5 +80,9 @@ export interface AdminPrize {
   image: string
   rarity: 'N' | 'R' | 'SR' | 'SSR'
   probability: number
-  stock: number
+  weight: number
+  quantity: number
+  remainingQuantity: number
+  isActive: boolean
+  ipNameSnapshot: string
 }

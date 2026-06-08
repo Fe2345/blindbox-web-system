@@ -8,19 +8,19 @@ export const useMerchantStore = defineStore('merchant', () => {
 
   async function fetchList() {
     const res: any = await api.getMerchantList()
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 
   async function review(id: string, action: string, note: string) {
     const res: any = await api.reviewMerchant(id, { action, note })
-    if (res.code === 0) await fetchList()
+    if (res.code === 200) await fetchList()
     return res
   }
 
   async function updateStatus(id: string, status: string) {
     const res: any = await api.updateMerchantStatus(id, status)
-    if (res.code === 0) await fetchList()
+    if (res.code === 200) await fetchList()
     return res
   }
 

@@ -74,13 +74,13 @@ const applications = exchangeStore.applications
 
 async function handleAccept(id: string) {
   const res = await exchangeStore.acceptApp(id)
-  if (res.code === 0) ElMessage.success('已接受')
+  if (res.code === 200) ElMessage.success('已接受')
   else ElMessage.error(res.message)
 }
 
 async function handleReject(id: string) {
   const res = await exchangeStore.rejectApp(id)
-  if (res.code === 0) ElMessage.success('已拒绝')
+  if (res.code === 200) ElMessage.success('已拒绝')
   else ElMessage.error(res.message)
 }
 

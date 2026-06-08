@@ -8,13 +8,13 @@ export const useOrderStore = defineStore('order', () => {
 
   async function fetchList() {
     const res: any = await api.getOrderList()
-    if (res.code === 0) list.value = res.data
+    if (res.code === 200) list.value = res.data
     return res
   }
 
   async function ship(id: string, company: string, trackingNo: string) {
     const res: any = await api.shipOrder(id, { company, trackingNo })
-    if (res.code === 0) await fetchList()
+    if (res.code === 200) await fetchList()
     return res
   }
 

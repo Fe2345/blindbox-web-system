@@ -8,7 +8,7 @@ export const useMerchantDashboardStore = defineStore('merchantDashboard', () => 
 
   async function fetchDashboard() {
     const res: any = await dashboardApi.getMerchantDashboard()
-    if (res.code === 0) data.value = res.data
+    if (res.code === 200) data.value = res.data
     return res
   }
 

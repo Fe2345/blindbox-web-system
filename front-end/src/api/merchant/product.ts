@@ -27,3 +27,9 @@ export function updateProduct(id: string, data: {
 }) {
   return request.put(`/products/${id}`, data)
 }
+
+export function uploadProductImage(file: File) {
+  const formData = new FormData()
+  formData.append('image', file)
+  return request.post('/products/upload-image', formData)
+}

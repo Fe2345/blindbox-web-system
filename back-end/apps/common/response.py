@@ -8,10 +8,8 @@
   {"code": 200, "message": "success", "data": {"count": 100, "page": 1, "page_size": 10, "results": [...]}}
 
 错误:
-  {"code": 400, "message": "参数错误", "data": null}
+  {"code": -1, "message": "参数错误", "data": null}
 """
-
-from typing import Optional
 
 from rest_framework.response import Response as DRFResponse
 
@@ -20,10 +18,8 @@ def success(data=None, message: str = "success", code: int = 200) -> DRFResponse
     return DRFResponse({"code": code, "message": message, "data": data})
 
 
-def error(message: str = "error", code: int = 400, data=None, http_status: Optional[int] = None) -> DRFResponse:
-    if http_status is None:
-        http_status = code
-    return DRFResponse({"code": code, "message": message, "data": data}, status=http_status)
+def error(message: str = "error", http_status: int = 400, data=None) -> DRFResponse:
+    return DRFResponse({"code": -1, "message": message, "data": data}, status=http_status)
 
 
 def flatten_errors(errors) -> str:

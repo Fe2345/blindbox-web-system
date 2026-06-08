@@ -22,11 +22,12 @@ export interface RegisterForm {
 
 export interface Address {
   id: string
-  name: string
-  phone: string
-  province: string
-  city: string
-  district: string
+  receiverName: string
+  receiverPhone: string
+  province: { code: string; name: string; level: number }
+  city: { code: string; name: string; level: number }
+  district: { code: string; name: string; level: number }
+  street: string
   detail: string
   isDefault: boolean
 }

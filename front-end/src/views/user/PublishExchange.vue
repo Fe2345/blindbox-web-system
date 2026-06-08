@@ -76,14 +76,12 @@ async function handlePublish() {
       expectDescription: form.value.expectDescription,
       remark: form.value.remark,
     })
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('发布成功')
       router.push('/exchange')
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('发布失败')
   } finally {
     publishing.value = false
   }

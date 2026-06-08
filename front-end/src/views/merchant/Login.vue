@@ -13,7 +13,9 @@
           <el-button type="primary" :loading="loading" style="width: 100%" @click="handleLogin">登录</el-button>
         </el-form-item>
       </el-form>
-      <div class="login-tip">测试账号：merchant / merchant123</div>
+      <div class="login-tip">
+        还没有账号？<router-link to="/register">立即注册</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -41,14 +43,12 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await authStore.login(form.username, form.password)
-    if (res.code === 0) {
+    if (res.code === 200) {
       ElMessage.success('登录成功')
       router.push('/')
     } else {
       ElMessage.error(res.message)
     }
-  } catch {
-    ElMessage.error('登录失败')
   } finally {
     loading.value = false
   }
@@ -72,4 +72,5 @@ async function handleLogin() {
 }
 .login-card h2 { text-align: center; margin-bottom: 30px; color: #303133; font-size: 22px; }
 .login-tip { text-align: center; margin-top: 12px; color: #909399; font-size: 13px; }
+.login-tip a { color: #409eff; text-decoration: none; }
 </style>

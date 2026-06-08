@@ -1,6 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const routes = [
+  {
+    path: '/register',
+    name: 'MerchantRegister',
+    component: () => import('@/views/merchant/Register.vue'),
+    meta: { noAuth: true },
+  },
   {
     path: '/login',
     name: 'MerchantLogin',
@@ -25,17 +31,20 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
 })
 
 router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('merchant_token')
-  if (!to.meta.noAuth && !token) {
-    next('/login')
-  } else {
+  if (to.meta.noAuth) {
     next()
+    return
   }
+  if (localStorage.getItem('merchant_logged_in') !== 'true') {
+    next('/login')
+    return
+  }
+  next()
 })
 
 export default router
