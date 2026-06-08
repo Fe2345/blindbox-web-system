@@ -201,10 +201,10 @@ export const mockAddresses: Address[] = [
 // ========== Admin Mock Data ==========
 
 export const mockMerchants: Merchant[] = [
-  { id: 'm001', name: '潮玩优品', contactName: '李明', phone: '13900001111', email: 'liming@chaowan.com', license: '营业执照编号12345', status: 'approved', creditScore: 95, supplyCount: 12, violationCount: 0, reviewNote: '资质齐全，审核通过', createdAt: '2026-01-15', reviewedAt: '2026-01-16' },
-  { id: 'm002', name: '数码好物坊', contactName: '王芳', phone: '13900002222', email: 'wangfang@digital.com', license: '营业执照编号23456', status: 'pending', creditScore: 0, supplyCount: 0, violationCount: 0, reviewNote: '', createdAt: '2026-05-18', reviewedAt: null },
-  { id: 'm003', name: '零食汇', contactName: '赵强', phone: '13900003333', email: 'zhaoqiang@snack.com', license: '营业执照编号34567', status: 'approved', creditScore: 88, supplyCount: 8, violationCount: 1, reviewNote: '审核通过，注意食品资质', createdAt: '2025-11-20', reviewedAt: '2025-11-22' },
-  { id: 'm004', name: '美妆小铺', contactName: '孙丽', phone: '13900004444', email: 'sunli@beauty.com', license: '营业执照编号45678', status: 'rejected', creditScore: 0, supplyCount: 0, violationCount: 0, reviewNote: '资质材料不全，需补充化妆品经营许可证', createdAt: '2026-05-10', reviewedAt: '2026-05-11' },
+  { id: 'm001', name: '潮玩优品', contactName: '李明', phone: '13900001111', email: 'liming@chaowan.com', license: '营业执照编号12345', businessScope: '潮玩、动漫IP周边', supplyDescription: '供应盲盒、挂件、立牌、手办等潮玩商品', status: 'approved', creditScore: 95, supplyCount: 12, violationCount: 0, reviewNote: '资质齐全，审核通过', createdAt: '2026-01-15', reviewedAt: '2026-01-16' },
+  { id: 'm002', name: '数码好物坊', contactName: '王芳', phone: '13900002222', email: 'wangfang@digital.com', license: '营业执照编号23456', businessScope: '数码配件、智能设备', supplyDescription: '供应耳机、充电器、智能穿戴等数码好物', status: 'pending', creditScore: 0, supplyCount: 0, violationCount: 0, reviewNote: '', createdAt: '2026-05-18', reviewedAt: null },
+  { id: 'm003', name: '零食汇', contactName: '赵强', phone: '13900003333', email: 'zhaoqiang@snack.com', license: '营业执照编号34567', businessScope: '食品、休闲零食', supplyDescription: '供应进口零食、礼盒、饮品等食品类商品', status: 'approved', creditScore: 88, supplyCount: 8, violationCount: 1, reviewNote: '审核通过，注意食品资质', createdAt: '2025-11-20', reviewedAt: '2025-11-22' },
+  { id: 'm004', name: '美妆小铺', contactName: '孙丽', phone: '13900004444', email: 'sunli@beauty.com', license: '营业执照编号45678', businessScope: '美妆护肤', supplyDescription: '供应彩妆、护肤、香氛等美妆商品', status: 'rejected', creditScore: 0, supplyCount: 0, violationCount: 0, reviewNote: '资质材料不全，需补充化妆品经营许可证', createdAt: '2026-05-10', reviewedAt: '2026-05-11' },
 ]
 
 export const mockAdminUsers: AdminUser[] = [

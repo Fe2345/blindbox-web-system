@@ -26,7 +26,9 @@ set autocommit=0;
 REPLACE INTO `accounts_user` VALUES
 (1,'pbkdf2_sha256$1200000$netW4GiGUB9Qclivj8rGqd$H+vSva0vyjdPuB5QUMYsZtvAjESuEReXui54WLsYC/0=',NULL,0,'111','','','',0,1,'2026-05-29 06:12:39.981385','user','18301108746',''),
 (2,'pbkdf2_sha256$1200000$F4Cl1QNUsqlHrYdzFTix2H$OYAN5c5hUNy7G85rloWlTyn3NLjYUMZKGkGwIvVLDQI=',NULL,0,'testuser2','','','',0,1,'2026-05-29 06:27:28.524985','user','13800000002',''),
-(3,'pbkdf2_sha256$1200000$3zPsVup8qPq9LLI5XVHVyD$Clv6pjS1Q+1pqTURPSwrUxraBdNrgVxyP9awkwuCPUI=',NULL,0,'paimon','','','',0,1,'2026-06-03 07:21:03.161932','user','18301108746','/media/avatar/d5ad39290a3041a1896892812d30f655.png');
+(3,'pbkdf2_sha256$1200000$3zPsVup8qPq9LLI5XVHVyD$Clv6pjS1Q+1pqTURPSwrUxraBdNrgVxyP9awkwuCPUI=',NULL,0,'paimon','','','',0,1,'2026-06-03 07:21:03.161932','user','18301108746','/media/avatar/d5ad39290a3041a1896892812d30f655.png'),
+(4,'pbkdf2_sha256$1200000$1HFZcTiznJUvxFOGbmLTXw$hKsfbM/1/YnXFd2mOU2sKlij0Mz406stBZMdQWfqInU=',NULL,0,'merchant','','','',0,1,'2026-06-08 06:30:07.814164','merchant','13900001111',''),
+(7,'pbkdf2_sha256$1200000$vLJ7YeqaOf4qHFp5PV35nD$e4hP6Vn2iKZy74QbEqON7E+DdcfkuKMVBywJU0urH78=',NULL,0,'测试商家','','','',0,1,'2026-06-08 09:56:08.049281','merchant','13500000001','');
 /*!40000 ALTER TABLE `accounts_user` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -3758,6 +3760,9 @@ commit;
 LOCK TABLES `merchant` WRITE;
 /*!40000 ALTER TABLE `merchant` DISABLE KEYS */;
 set autocommit=0;
+REPLACE INTO `merchant` VALUES
+(1,'2026-06-08 06:30:07.935610','2026-06-08 06:30:07.935623','潮玩优品','李明','13900001111','liming@test.com','','潮玩手办设计与销售','各类潮玩手办供货','approved',100,'',NULL,4),
+(3,'2026-06-08 09:56:08.161356','2026-06-08 10:03:13.512961','测试商家','zlh','13500000001','','','测试','测试','pending',100,'',NULL,7);
 /*!40000 ALTER TABLE `merchant` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -3769,6 +3774,9 @@ commit;
 LOCK TABLES `merchant_inventory` WRITE;
 /*!40000 ALTER TABLE `merchant_inventory` DISABLE KEYS */;
 set autocommit=0;
+REPLACE INTO `merchant_inventory` VALUES
+(1,'2026-06-08 06:39:20.816973','2026-06-08 06:39:43.040347',100,1),
+(2,'2026-06-08 10:20:40.881519','2026-06-08 10:20:40.881538',10,2);
 /*!40000 ALTER TABLE `merchant_inventory` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -3780,6 +3788,8 @@ commit;
 LOCK TABLES `merchant_inventory_record` WRITE;
 /*!40000 ALTER TABLE `merchant_inventory_record` DISABLE KEYS */;
 set autocommit=0;
+REPLACE INTO `merchant_inventory_record` VALUES
+(1,'2026-06-08 06:39:43.035349','2026-06-08 06:39:43.035368','modify',10,100,'商家手动调整',1);
 /*!40000 ALTER TABLE `merchant_inventory_record` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -3791,6 +3801,9 @@ commit;
 LOCK TABLES `merchant_product` WRITE;
 /*!40000 ALTER TABLE `merchant_product` DISABLE KEYS */;
 set autocommit=0;
+REPLACE INTO `merchant_product` VALUES
+(1,'2026-06-08 06:39:20.813727','2026-06-08 06:39:20.813744','测试','/media/avatar/d5ad39290a3041a1896892812d30f655','潮玩','R','测试描述',0,'pending','',1),
+(2,'2026-06-08 10:20:40.873041','2026-06-08 10:20:40.873064','测试商品','/media/product/c5ef2b0b664944d3908a46c18e7365d1.png','动漫IP','SSR','测试',0,'pending','',3);
 /*!40000 ALTER TABLE `merchant_product` ENABLE KEYS */;
 UNLOCK TABLES;
 commit;
@@ -3915,4 +3928,4 @@ commit;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-06-08  3:29:15
+-- Dump completed on 2026-06-08 11:19:53
