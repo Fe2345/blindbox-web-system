@@ -122,3 +122,6 @@ class AdminUserStatusSerializer(serializers.Serializer):
     """用户状态切换序列化器"""
 
     is_active = serializers.BooleanField()
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
