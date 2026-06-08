@@ -41,7 +41,8 @@ class AdminRuleConfigView(CSRFExemptView):
         for field, value in serializer.validated_data.items():
             setattr(config, field, value)
         config.updated_by = request.user.username
-        config.save()
+        updated_fields = list(serializer.validated_data.keys()) + ["updated_by"]
+        config.save(update_fields=updated_fields)
         return success(data=RuleConfigSerializer(config).data)
 
 
@@ -103,10 +104,13 @@ class AdminLedgerListView(CSRFExemptView):
         ledger_type = request.query_params.get("type")
         if ledger_type:
             qs = qs.filter(type=ledger_type)
-        start_date = request.query_params.get("start_date")
-        if start_date:
-            qs = qs.filter(created_at__date__gte=start_date)
-        end_date = request.query_params.get("end_date")
-        if end_date:
-            qs = qs.filter(created_at__date__lte=end_date)
+        try:
+            start_date = request.query_params.get("start_date")
+            if start_date:
+                qs = qs.filter(created_at__date__gte=start_date)
+            end_date = request.query_params.get("end_date")
+            if end_date:
+                qs = qs.filter(created_at__date__lte=end_date)
+        except (ValueError, TypeError):
+            return error(message="日期格式无效", http_status=400)
         return success(data=TransactionLedgerSerializer(qs[:200], many=True).data)
