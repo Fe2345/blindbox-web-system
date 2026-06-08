@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
+    path: '/register',
+    name: 'MerchantRegister',
+    component: () => import('@/views/merchant/Register.vue'),
+    meta: { noAuth: true },
+  },
+  {
     path: '/login',
     name: 'MerchantLogin',
     component: () => import('@/views/merchant/Login.vue'),
