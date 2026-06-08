@@ -8,11 +8,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.common.permissions import IsMerchant
 from apps.common.response import success, error
-from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product
+from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product, ShipmentTask
 from apps.merchant.serializers import (
     MerchantSerializer, MerchantLoginSerializer,
     ProductSerializer, ProductWriteSerializer, ProductUpdateSerializer,
     InventorySerializer, InventoryUpdateSerializer, InventoryRecordSerializer,
+    ShipmentTaskSerializer, ShipmentConfirmSerializer,
 )
 
 
@@ -227,3 +228,55 @@ class InventoryRecordListView(APIView):
             qs = qs.filter(product_id=product_id)
 
         return success(InventoryRecordSerializer(qs, many=True).data)
+
+
+class ShipmentTaskListView(APIView):
+    """发货任务列表 — GET /merchant/api/shipments?status="""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        qs = ShipmentTask.objects.filter(product__merchant=merchant).select_related("product")
+
+        status_filter = request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+
+        return success(ShipmentTaskSerializer(qs, many=True).data)
+
+
+class ShipmentTaskDetailView(APIView):
+    """发货任务详情 — GET /merchant/api/shipments/<id>"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request, pk):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        task = get_object_or_404(ShipmentTask, pk=pk, product__merchant=merchant)
+        return success(ShipmentTaskSerializer(task).data)
+
+
+class ShipmentConfirmView(APIView):
+    """确认发货 — POST /merchant/api/shipments/<id>/ship"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def post(self, request, pk):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        task = get_object_or_404(ShipmentTask, pk=pk, product__merchant=merchant)
+
+        if task.status != ShipmentTask.Status.PENDING:
+            return error("当前状态不可发货", status.HTTP_200_OK)
+
+        ser = ShipmentConfirmSerializer(data=request.data)
+        if not ser.is_valid():
+            return error(ser.errors, status.HTTP_400_BAD_REQUEST)
+
+        data = ser.validated_data
+        task.status = ShipmentTask.Status.SHIPPED
+        task.logistics_company = data["logistics_company"]
+        task.tracking_no = data["tracking_no"]
+        task.shipped_at = timezone.now()
+        task.save()
+        return success(None, "发货成功")
