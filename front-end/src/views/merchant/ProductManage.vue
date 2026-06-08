@@ -82,12 +82,7 @@ const statusFilter = ref('')
 const detailVisible = ref(false)
 const currentProduct = ref<MerchantProduct | null>(null)
 
-const filtered = computed(() => {
-  let list = productStore.list
-  if (statusFilter.value) list = list.filter((p) => p.status === statusFilter.value)
-  if (keyword.value) list = list.filter((p) => p.name.includes(keyword.value))
-  return list
-})
+const filtered = computed(() => productStore.list)
 
 function rarityLabel(r: string) {
   const map: Record<string, string> = { N: '普通', R: '稀有', SR: '超稀有', SSR: '传说' }
@@ -116,7 +111,7 @@ function viewDetail(row: MerchantProduct) {
 
 async function loadData() {
   loading.value = true
-  await productStore.fetchList()
+  await productStore.fetchList({ status: statusFilter.value || undefined, keyword: keyword.value || undefined })
   loading.value = false
 }
 
