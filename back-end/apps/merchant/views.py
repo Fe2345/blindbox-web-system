@@ -8,10 +8,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.common.permissions import IsMerchant
 from apps.common.response import success, error
-from apps.merchant.models import Inventory, Merchant, Product
+from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product
 from apps.merchant.serializers import (
     MerchantSerializer, MerchantLoginSerializer,
     ProductSerializer, ProductWriteSerializer, ProductUpdateSerializer,
+    InventorySerializer, InventoryUpdateSerializer, InventoryRecordSerializer,
 )
 
 
@@ -172,3 +173,57 @@ class ProductDetailView(APIView):
 
         product.save()
         return success(None, "修改成功")
+
+
+class InventoryListView(APIView):
+    """库存列表 — GET /merchant/api/inventory"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        inventories = Inventory.objects.filter(product__merchant=merchant).select_related("product")
+        return success(InventorySerializer(inventories, many=True).data)
+
+
+class InventoryUpdateView(APIView):
+    """更新库存 — PUT /merchant/api/inventory/<product_id>"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def put(self, request, product_id):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        product = get_object_or_404(Product, pk=product_id, merchant=merchant)
+        inv, _ = Inventory.objects.get_or_create(product=product)
+
+        ser = InventoryUpdateSerializer(data=request.data)
+        if not ser.is_valid():
+            return error(ser.errors, status.HTTP_400_BAD_REQUEST)
+
+        new_stock = ser.validated_data["stock"]
+        InventoryRecord.objects.create(
+            product=product,
+            type=InventoryRecord.ChangeType.MODIFY,
+            before_stock=inv.current_stock,
+            after_stock=new_stock,
+            reason="商家手动调整",
+        )
+        inv.current_stock = new_stock
+        inv.save()
+        return success(None, "库存已更新")
+
+
+class InventoryRecordListView(APIView):
+    """库存变更记录 — GET /merchant/api/inventory/records?productId="""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        qs = InventoryRecord.objects.filter(product__merchant=merchant).select_related("product")
+
+        product_id = request.query_params.get("productId")
+        if product_id:
+            qs = qs.filter(product_id=product_id)
+
+        return success(InventoryRecordSerializer(qs, many=True).data)
