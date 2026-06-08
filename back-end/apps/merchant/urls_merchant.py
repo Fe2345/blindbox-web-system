@@ -1,6 +1,7 @@
 from django.urls import path
 
 from apps.merchant.views import (
+    MerchantRegisterView,
     MerchantLoginView, MerchantInfoView,
     MerchantApplicationView,
     MerchantDashboardView,
@@ -12,6 +13,7 @@ from apps.merchant.views import (
 
 urlpatterns = [
     # 认证
+    path("register", MerchantRegisterView.as_view(), name="merchant-register"),
     path("login", MerchantLoginView.as_view(), name="merchant-login"),
     path("info", MerchantInfoView.as_view(), name="merchant-info"),
     # 入驻申请（GET 查状态 / POST 提交）

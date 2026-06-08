@@ -168,3 +168,24 @@ class ShipmentConfirmSerializer(serializers.Serializer):
 
     def to_internal_value(self, data):
         return super().to_internal_value(keys_to_snake(data))
+
+
+class MerchantRegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150)
+    password = serializers.CharField(min_length=6, max_length=128)
+    phone = serializers.CharField(max_length=11)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
+
+    def validate_username(self, value):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("用户名已存在")
+        return value
+
+    def validate_phone(self, value):
+        if not re.match(r"^1[3-9]\d{9}$", value):
+            raise serializers.ValidationError("请输入有效的 11 位手机号")
+        return value
