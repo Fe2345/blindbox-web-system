@@ -9,7 +9,9 @@ import router from './router/admin'
 import { setupMock } from './mock'
 import './styles/admin.css'
 
-setupMock()
+if (import.meta.env.VITE_USE_MOCK === 'true') {
+  setupMock()
+}
 
 const app = createApp(AdminApp)
 
