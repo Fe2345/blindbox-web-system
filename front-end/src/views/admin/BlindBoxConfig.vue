@@ -32,6 +32,7 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑盲盒' : '新增盲盒'" width="550px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="盲盒名称"><el-input v-model="form.name" /></el-form-item>
+        <el-form-item label="封面"><el-input v-model="form.cover" placeholder="封面图片URL" /></el-form-item>
         <el-form-item label="分类">
           <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
             <el-option label="动漫IP" value="动漫IP" />
@@ -63,9 +64,9 @@ import { ElMessage } from 'element-plus'
 const blindBoxStore = useBlindBoxStore()
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ id: '', name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
+const form = ref({ id: '', name: '', cover: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
 
-function showAdd() { isEdit.value = false; form.value = { id: '', name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { id: '', name: '', cover: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row, dateRange: null }; dialogVisible.value = true }
 async function handleSave() {
   if (!form.value.name || !form.value.category) {

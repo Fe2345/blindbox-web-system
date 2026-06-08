@@ -209,10 +209,6 @@ class AdminBlindBoxListView(CSRFExemptView):
             qs = qs.filter(name__icontains=keyword)
         return success(data=AdminBlindBoxSerializer(qs, many=True).data)
 
-
-class AdminBlindBoxCreateView(CSRFExemptView):
-    permission_classes = [IsAdmin]
-
     def post(self, request):
         serializer = BlindBoxWriteSerializer(data=request.data)
         if not serializer.is_valid():
