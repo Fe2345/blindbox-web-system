@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <!-- 轮播区 -->
-    <el-carousel height="280px" class="home-carousel">
+    <el-carousel height="280px" class="home-carousel" :pause-on-hover="true">
       <el-carousel-item v-for="item in carouselItems" :key="item.title">
         <div class="carousel-card" :style="{ background: item.bg }">
           <div class="carousel-text">
@@ -16,15 +16,15 @@
     <!-- 用户信息区 -->
     <el-card v-if="userStore.isLoggedIn && userStore.userInfo" class="user-summary">
       <div class="summary-content">
-        <div class="summary-item">
+        <div class="summary-item clickable" @click="router.push('/profile')">
           <span class="label">欢迎回来</span>
           <span class="value">{{ userStore.userInfo.username }}</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item clickable" @click="router.push('/points')">
           <span class="label">积分余额</span>
           <span class="value points">{{ userStore.userInfo.points }}</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item clickable" @click="router.push('/orders')">
           <span class="label">待处理订单</span>
           <span class="value">{{ pendingOrders }}</span>
         </div>
@@ -124,9 +124,9 @@ const hotBoxes = ref<BlindBox[]>([])
 const exchangePosts = ref<ExchangePost[]>([])
 
 const carouselItems = [
-  { title: '原神角色盲盒', desc: '原神人气角色周边，限定挂件、立牌、手办等你来抽', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/blindbox/bb001' },
-  { title: 'MOLLY城市盲盒', desc: '泡泡玛特MOLLY城市系列，隐藏款概率惊喜', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/blindbox/bb002' },
-  { title: '换物中心', desc: '闲置好物换起来，找到你心仪的宝贝', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', link: '/exchange' },
+  { title: '原神角色盲盒', desc: '原神人气角色周边，限定挂件、立牌、手办等你来抽', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', link: '/blindbox/4' },
+  { title: 'EVA主题盲盒', desc: 'EVA人气角色周边，勇敢的少年快来抽取奇迹', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/blindbox/1' },
+  { title: '换物中心', desc: '不管重复还是不喜欢，无忧换到心仪的宝贝', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', link: '/exchange' },
 ]
 
 function remainingStock(box: any) {
@@ -134,6 +134,9 @@ function remainingStock(box: any) {
 }
 
 onMounted(async () => {
+  if (userStore.isLoggedIn) {
+    await userStore.fetchUserInfo()
+  }
   await blindBoxStore.fetchBlindBoxes()
   hotBoxes.value = blindBoxStore.blindBoxes.filter((b) => b.status !== 'ended').slice(0, 4)
   await exchangeStore.fetchPosts()
@@ -181,6 +184,15 @@ onMounted(async () => {
 
 .summary-item {
   text-align: center;
+}
+
+.summary-item.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.summary-item.clickable:hover {
+  opacity: 0.8;
 }
 
 .summary-item .label {
