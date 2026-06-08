@@ -280,3 +280,101 @@ class ShipmentConfirmView(APIView):
         task.shipped_at = timezone.now()
         task.save()
         return success(None, "发货成功")
+
+
+class MerchantDashboardView(APIView):
+    """商家工作台 — GET /merchant/api/dashboard"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        products = Product.objects.filter(merchant=merchant)
+        total = products.count()
+        pending = products.filter(status=Product.Status.PENDING).count()
+        low_stock = Inventory.objects.filter(
+            product__merchant=merchant, current_stock__lt=10
+        ).count()
+        pending_ship = ShipmentTask.objects.filter(
+            product__merchant=merchant, status=ShipmentTask.Status.PENDING
+        ).count()
+
+        todos = []
+        if pending:
+            todos.append({"id": 1, "title": f"{pending} 个商品待审核", "type": "product", "link": "/products"})
+        if pending_ship:
+            todos.append({"id": 2, "title": f"{pending_ship} 个待发货任务", "type": "shipment", "link": "/shipments"})
+        if low_stock:
+            todos.append({"id": 3, "title": f"{low_stock} 个商品库存不足", "type": "stock", "link": "/inventory"})
+
+        return success({
+            "totalProducts": total,
+            "pendingProducts": pending,
+            "lowStockProducts": low_stock,
+            "pendingShipments": pending_ship,
+            "reviewStatus": merchant.status,
+            "todos": todos,
+        })
+
+
+class RecordListView(APIView):
+    """活动记录 — GET /merchant/api/records?type=&keyword=&startDate=&endDate="""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        merchant = get_object_or_404(Merchant, user=request.user)
+        records = []
+
+        type_filter = request.query_params.get("type")
+        keyword = request.query_params.get("keyword")
+        start_date = request.query_params.get("startDate")
+        end_date = request.query_params.get("endDate")
+
+        # 库存变更记录
+        if not type_filter or type_filter == "inventory":
+            inv_qs = InventoryRecord.objects.filter(
+                product__merchant=merchant
+            ).select_related("product")
+            if keyword:
+                inv_qs = inv_qs.filter(product__name__icontains=keyword)
+            if start_date:
+                inv_qs = inv_qs.filter(created_at__gte=start_date)
+            if end_date:
+                inv_qs = inv_qs.filter(created_at__lte=end_date)
+            for r in inv_qs:
+                records.append({
+                    "id": f"inv-{r.id}",
+                    "type": "inventory",
+                    "productName": r.product.name,
+                    "description": {
+                        "increase": "入库", "decrease": "出库", "modify": "调整"
+                    }.get(r.type, r.type),
+                    "detail": f"{r.before_stock} → {r.after_stock}",
+                    "createdAt": r.created_at.isoformat(),
+                })
+
+        # 发货记录
+        if not type_filter or type_filter == "shipment":
+            ship_qs = ShipmentTask.objects.filter(
+                product__merchant=merchant, status=ShipmentTask.Status.SHIPPED
+            ).select_related("product")
+            if keyword:
+                ship_qs = ship_qs.filter(product__name__icontains=keyword)
+            if start_date:
+                ship_qs = ship_qs.filter(shipped_at__gte=start_date)
+            if end_date:
+                ship_qs = ship_qs.filter(shipped_at__lte=end_date)
+            for t in ship_qs:
+                records.append({
+                    "id": f"ship-{t.id}",
+                    "type": "shipment",
+                    "productName": t.product.name,
+                    "description": "发货",
+                    "detail": f"物流: {t.logistics_company} {t.tracking_no}",
+                    "createdAt": (t.shipped_at or t.created_at).isoformat(),
+                })
+
+        # 按时间倒序
+        records.sort(key=lambda x: x["createdAt"], reverse=True)
+        return success(records)
