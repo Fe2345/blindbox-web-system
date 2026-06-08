@@ -67,7 +67,7 @@
           <div class="card-body">
             <div class="card-title">{{ box.name }}</div>
             <div class="card-meta">消耗积分：{{ box.costPoints }}</div>
-            <div class="card-meta">剩余库存：{{ box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) }}</div>
+            <div class="card-meta">剩余库存：{{ remainingStock(box) }}</div>
           </div>
           <div class="card-actions">
             <el-tag :type="box.status === 'active' ? 'success' : box.status === 'inactive' ? 'warning' : 'info'" size="small">
@@ -126,6 +126,10 @@ const carouselItems = [
   { title: 'MOLLY城市盲盒', desc: '泡泡玛特MOLLY城市系列，隐藏款概率惊喜', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', link: '/blindbox/bb002' },
   { title: '换物中心', desc: '闲置好物换起来，找到你心仪的宝贝', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', link: '/exchange' },
 ]
+
+function remainingStock(box: any) {
+  return (box.prizes || []).reduce((sum: number, prize: any) => sum + (prize.remainingQuantity || 0), 0)
+}
 
 onMounted(async () => {
   await blindBoxStore.fetchBlindBoxes()

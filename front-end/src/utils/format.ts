@@ -24,7 +24,7 @@ export function rarityColor(rarity: string): string {
 
 export function assetStatusLabel(status: string): string {
   const map: Record<string, string> = {
-    available: '可回收',
+    available: '可操作',
     exchange_published: '换物发布中',
     exchange_locked: '交换锁定中',
     pending_shipment: '待发货',
@@ -55,7 +55,7 @@ export function orderStatusLabel(status: string): string {
 
 export function pointsTypeLabel(type: string): string {
   const map: Record<string, string> = {
-    blindbox_consume: '盲盒消耗',
+    blindbox_consume: '盲盒消费',
     recycle_return: '回收返还',
     system_adjust: '系统调整',
   }
@@ -83,12 +83,26 @@ export function merchantStatusType(status: string): string {
 }
 
 export function exchangeStatusLabel(status: string): string {
-  const map: Record<string, string> = { pending: '待处理', accepted: '已接受', locked: '交换锁定', completed: '已完成', cancelled: '已取消', exception: '异常' }
+  const map: Record<string, string> = {
+    pending: '待处理',
+    accepted: '已接受',
+    rejected: '已拒绝',
+    locked: '交换锁定',
+    completed: '已完成',
+    cancelled: '已取消',
+    exception: '异常',
+  }
   return map[status] || status
 }
 
 export function exceptionTypeLabel(type: string): string {
-  const map: Record<string, string> = { stock: '库存异常', order: '订单异常', duplicate: '重复异常', appeal: '用户申诉', other: '其他' }
+  const map: Record<string, string> = {
+    stock: '库存异常',
+    order: '订单异常',
+    duplicate: '重复异常',
+    appeal: '用户申诉',
+    other: '其他',
+  }
   return map[type] || type
 }
 
@@ -123,7 +137,7 @@ export function shipmentStatusType(status: string): string {
 }
 
 export function recordTypeLabel(type: string): string {
-  const map: Record<string, string> = { inventory: '库存记录', shipment: '发货记录', status_change: '状态变化' }
+  const map: Record<string, string> = { inventory: '库存记录', shipment: '发货记录', status_change: '状态变更' }
   return map[type] || type
 }
 
