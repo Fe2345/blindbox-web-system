@@ -79,15 +79,50 @@ class MerchantLoginView(APIView):
             return error("非商家账号", status.HTTP_200_OK)
 
         refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role
         try:
             merchant = Merchant.objects.get(user=user)
         except Merchant.DoesNotExist:
             return error("商家档案不存在", status.HTTP_200_OK)
 
-        return success({
-            "token": str(refresh.access_token),
+        jwt_config = settings.SIMPLE_JWT
+        access = str(refresh.access_token)
+        response = success({
+            "token": access,
             "merchant": MerchantSerializer(merchant).data,
         })
+
+        cookie_kwargs = {
+            "httponly": jwt_config["AUTH_COOKIE_HTTP_ONLY"],
+            "secure": jwt_config["AUTH_COOKIE_SECURE"],
+            "samesite": jwt_config["AUTH_COOKIE_SAMESITE"],
+            "path": jwt_config["AUTH_COOKIE_PATH"],
+        }
+        response.set_cookie(
+            jwt_config["AUTH_COOKIE"], access,
+            max_age=jwt_config["ACCESS_TOKEN_LIFETIME"].total_seconds(),
+            **cookie_kwargs,
+        )
+        response.set_cookie(
+            jwt_config["AUTH_COOKIE_REFRESH"], str(refresh),
+            max_age=jwt_config["REFRESH_TOKEN_LIFETIME"].total_seconds(),
+            **cookie_kwargs,
+        )
+        return response
+
+
+class MerchantLogoutView(APIView):
+    """商家登出 — POST /merchant/api/logout"""
+
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        jwt_config = settings.SIMPLE_JWT
+        response = success(message="已退出登录")
+        response.delete_cookie(jwt_config["AUTH_COOKIE"], path=jwt_config["AUTH_COOKIE_PATH"])
+        response.delete_cookie(jwt_config["AUTH_COOKIE_REFRESH"], path=jwt_config["AUTH_COOKIE_PATH"])
+        return response
 
 
 class MerchantInfoView(APIView):

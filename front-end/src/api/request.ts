@@ -65,11 +65,19 @@ request.interceptors.response.use(
         processQueue(refreshErr)
         // 刷新失败：清除登录态，跳转登录页
         localStorage.removeItem('isLoggedIn')
+        localStorage.removeItem('user_role')
         router.push('/login')
         return Promise.reject(refreshErr)
       } finally {
         isRefreshing = false
       }
+    }
+
+    // 403 表示角色不匹配，清除登录态跳转登录页
+    if (err.response?.status === 403) {
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('user_role')
+      router.push('/login')
     }
 
     const msg = err.response?.data?.message || err.message || '请求失败'

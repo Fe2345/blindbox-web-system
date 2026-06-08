@@ -182,6 +182,7 @@ class LoginView(APIView):
 
         jwt_config = settings.SIMPLE_JWT
         refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role
         access = str(refresh.access_token)
 
         response = success(data={
@@ -191,6 +192,7 @@ class LoginView(APIView):
                 "username": user.username,
                 "phone": user.phone,
                 "avatar": user.avatar,
+                "role": user.role,
                 "status": "active" if user.is_active else "frozen",
                 "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
             },
@@ -216,9 +218,30 @@ class LoginView(APIView):
         return response
 
 
+class CookieTokenRefreshSerializer(TokenRefreshSerializer):
+    """刷新时从旧 refresh token 中保留 role claim 到新 access token。"""
+
+    def validate(self, attrs):
+        # 在父类刷新（可能轮换 token）之前，从旧 token 读取 role
+        refresh = RefreshToken(attrs["refresh"])
+        role = refresh.get("role")
+
+        data = super().validate(attrs)
+
+        if role and "access" in data:
+            # super().validate 内部的 refresh.access_token 是一个可变对象，
+            # 直接修改它会影响 data["access"] 的序列化结果
+            new_refresh = RefreshToken(data["refresh"])
+            new_refresh.access_token["role"] = role
+            data["access"] = str(new_refresh.access_token)
+        return data
+
+
 class CookieTokenRefreshView(TokenRefreshView):
     """Token 刷新视图：优先从 httpOnly cookie 读取 refresh token，
     刷新成功后更新 cookie 中的新 token。"""
+
+    serializer_class = CookieTokenRefreshSerializer
 
     def post(self, request, *args, **kwargs):
         if isinstance(request.data, dict) and "refresh" not in request.data:
@@ -392,3 +415,57 @@ class AdminUserStatusView(CSRFExemptView):
         user.is_active = serializer.validated_data["is_active"]
         user.save(update_fields=["is_active"])
         return success(data=AdminUserSerializer(user).data)
+
+
+class AdminLoginView(APIView):
+    """管理员登录，返回 JWT Token 并设置 httpOnly cookie"""
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        data = serializer.validated_data
+        user = authenticate(request, username=data["username"], password=data["password"])
+        if user is None:
+            return error(message="用户名或密码错误", http_status=400)
+
+        if user.role != "admin":
+            return error(message="无管理员权限", http_status=403)
+
+        if not user.is_active:
+            return error(message="账号已被冻结", http_status=400)
+
+        jwt_config = settings.SIMPLE_JWT
+        refresh = RefreshToken.for_user(user)
+        refresh["role"] = user.role
+        access = str(refresh.access_token)
+
+        response = success(data={
+            "token": access,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "phone": user.phone,
+                "avatar": user.avatar,
+                "role": user.role,
+            },
+        })
+
+        cookie_kwargs = {
+            "httponly": jwt_config["AUTH_COOKIE_HTTP_ONLY"],
+            "secure": jwt_config["AUTH_COOKIE_SECURE"],
+            "samesite": jwt_config["AUTH_COOKIE_SAMESITE"],
+            "path": jwt_config["AUTH_COOKIE_PATH"],
+        }
+        response.set_cookie(
+            jwt_config["AUTH_COOKIE"], access,
+            max_age=jwt_config["ACCESS_TOKEN_LIFETIME"].total_seconds(),
+            **cookie_kwargs,
+        )
+        response.set_cookie(
+            jwt_config["AUTH_COOKIE_REFRESH"], str(refresh),
+            max_age=jwt_config["REFRESH_TOKEN_LIFETIME"].total_seconds(),
+            **cookie_kwargs,
+        )
+        return response

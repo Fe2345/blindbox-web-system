@@ -14,6 +14,7 @@ export const useUserStore = defineStore('user', () => {
       userInfo.value = res.data.user
       isLoggedIn.value = true
       localStorage.setItem('isLoggedIn', 'true')
+      localStorage.setItem('user_role', res.data.user.role)
     }
     return res
   }
@@ -80,6 +81,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     isLoggedIn.value = false
     localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('user_role')
   }
 
   return {
