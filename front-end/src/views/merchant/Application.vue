@@ -4,7 +4,11 @@
       <h2>商家入驻申请</h2>
     </div>
 
-    <el-card v-if="existingApp && existingApp.status !== 'rejected'">
+    <el-card v-if="!applicationLoaded">
+      <el-skeleton :rows="5" animated />
+    </el-card>
+
+    <el-card v-if="applicationLoaded && existingApp && existingApp.status !== 'rejected'">
       <template #header><span>审核状态</span></template>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="商家名称">{{ existingApp.merchantName }}</el-descriptions-item>
@@ -20,13 +24,13 @@
       </el-descriptions>
     </el-card>
 
-    <el-card v-if="existingApp?.status === 'rejected'" style="margin-top: 16px">
+    <el-card v-if="applicationLoaded && existingApp?.status === 'rejected'" style="margin-top: 16px">
       <template #header><span>驳回原因</span></template>
       <el-alert :title="existingApp.reviewNote" type="error" show-icon :closable="false" />
       <el-button type="primary" style="margin-top: 16px" @click="showForm = true">重新提交申请</el-button>
     </el-card>
 
-    <el-card v-if="!existingApp || showForm" style="margin-top: 16px">
+    <el-card v-if="applicationLoaded && (!existingApp || showForm)" style="margin-top: 16px">
       <template #header><span>填写入驻信息</span></template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="商家名称" prop="merchantName">
@@ -61,6 +65,7 @@ import * as applicationApi from '@/api/merchant/application'
 import type { MerchantApplication } from '@/types/merchant-self'
 
 const existingApp = ref<MerchantApplication | null>(null)
+const applicationLoaded = ref(false)
 const showForm = ref(false)
 const loading = ref(false)
 const formRef = ref<FormInstance>()
@@ -92,8 +97,12 @@ function statusType(s: string) {
 }
 
 async function loadApplication() {
-  const res: any = await applicationApi.getApplicationStatus()
-  if (res.code === 200 && res.data) existingApp.value = res.data
+  try {
+    const res: any = await applicationApi.getApplicationStatus()
+    existingApp.value = res.code === 200 && res.data ? res.data : null
+  } finally {
+    applicationLoaded.value = true
+  }
 }
 
 async function handleSubmit() {

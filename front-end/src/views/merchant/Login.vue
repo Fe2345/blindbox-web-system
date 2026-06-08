@@ -13,7 +13,9 @@
           <el-button type="primary" :loading="loading" style="width: 100%" @click="handleLogin">登录</el-button>
         </el-form-item>
       </el-form>
-      <div class="login-tip">测试账号：merchant / merchant123</div>
+      <div class="login-tip">
+        还没有账号？<router-link to="/register">立即注册</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -70,4 +72,5 @@ async function handleLogin() {
 }
 .login-card h2 { text-align: center; margin-bottom: 30px; color: #303133; font-size: 22px; }
 .login-tip { text-align: center; margin-top: 12px; color: #909399; font-size: 13px; }
+.login-tip a { color: #409eff; text-decoration: none; }
 </style>

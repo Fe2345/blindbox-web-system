@@ -119,10 +119,7 @@ const shipRules = {
   trackingNo: [{ required: true, message: '请输入运单号', trigger: 'blur' }],
 }
 
-const filtered = computed(() => {
-  if (!statusFilter.value) return shipmentStore.list
-  return shipmentStore.list.filter((s) => s.status === statusFilter.value)
-})
+const filtered = computed(() => shipmentStore.list)
 
 function viewDetail(task: ShipmentTask) {
   currentTask.value = task
@@ -156,7 +153,7 @@ async function handleShip() {
 
 async function loadData() {
   loading.value = true
-  await shipmentStore.fetchList()
+  await shipmentStore.fetchList({ status: statusFilter.value || undefined })
   loading.value = false
 }
 

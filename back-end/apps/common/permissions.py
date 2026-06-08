@@ -17,3 +17,12 @@ class IsAdmin(BasePermission):
             and request.user.is_authenticated
             and request.user.role == "admin"
         )
+
+
+class IsMerchant(BasePermission):
+    """仅商家用户可访问，返回 403。"""
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return request.user.role == "merchant"
