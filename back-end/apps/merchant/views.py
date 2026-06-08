@@ -103,6 +103,8 @@ class MerchantApplicationView(APIView):
             merchant = Merchant.objects.get(user=request.user)
         except Merchant.DoesNotExist:
             return error("尚未提交入驻申请", status.HTTP_200_OK)
+        if not merchant.name:
+            return success(None)
         from apps.merchant.serializers import MerchantApplicationStatusSerializer
         return success(MerchantApplicationStatusSerializer(merchant).data)
 
