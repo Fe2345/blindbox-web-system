@@ -57,3 +57,39 @@ class MerchantInfoView(APIView):
         except Merchant.DoesNotExist:
             return error("商家档案不存在", status.HTTP_404_NOT_FOUND)
         return success(MerchantSerializer(merchant).data)
+
+
+class MerchantApplicationView(APIView):
+    """入驻申请 — GET/POST /merchant/api/application"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        """获取当前入驻申请状态"""
+        try:
+            merchant = Merchant.objects.get(user=request.user)
+        except Merchant.DoesNotExist:
+            return error("尚未提交入驻申请", status.HTTP_200_OK)
+        from apps.merchant.serializers import MerchantApplicationStatusSerializer
+        return success(MerchantApplicationStatusSerializer(merchant).data)
+
+    def post(self, request):
+        """提交/重新提交入驻申请"""
+        from apps.merchant.serializers import MerchantApplicationSerializer
+        ser = MerchantApplicationSerializer(data=request.data)
+        if not ser.is_valid():
+            return error(ser.errors, status.HTTP_400_BAD_REQUEST)
+
+        data = ser.validated_data
+        Merchant.objects.update_or_create(
+            user=request.user,
+            defaults={
+                "name": data["merchant_name"],
+                "contact_name": data["contact_name"],
+                "phone": data["phone"],
+                "business_scope": data.get("business_scope", ""),
+                "supply_desc": data.get("supply_description", ""),
+                "status": Merchant.Status.PENDING,
+            },
+        )
+        return success(None, "申请已提交，等待审核")
