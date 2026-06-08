@@ -32,7 +32,16 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑盲盒' : '新增盲盒'" width="550px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="盲盒名称"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
+            <el-option label="动漫IP" value="动漫IP" />
+            <el-option label="潮玩" value="潮玩" />
+            <el-option label="数码" value="数码" />
+            <el-option label="生活" value="生活" />
+            <el-option label="美妆" value="美妆" />
+            <el-option label="食品" value="食品" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
         <el-form-item label="消耗积分"><el-input-number v-model="form.costPoints" :min="1" /></el-form-item>
         <el-form-item label="最大抽取次数"><el-input-number v-model="form.maxDrawCount" :min="1" /></el-form-item>

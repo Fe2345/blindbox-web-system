@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -25,6 +27,7 @@ from apps.merchant.serializers import (
 )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class CSRFExemptView(APIView):
     pass
 
