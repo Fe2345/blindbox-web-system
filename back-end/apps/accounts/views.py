@@ -1,4 +1,6 @@
 import logging
+import os
+import uuid
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -261,7 +263,7 @@ class UserInfoView(APIView):
 
         data = serializer.validated_data
         user = request.user
-        updatable = ["username", "phone"]
+        updatable = ["username", "phone", "avatar"]
         for field in updatable:
             if field in data:
                 setattr(user, field, data[field])
@@ -280,6 +282,42 @@ class UserInfoView(APIView):
             "status": "active" if user.is_active else "frozen",
             "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
         }
+
+
+class AvatarUploadView(APIView):
+    """上传用户头像"""
+
+    permission_classes = [IsAuthenticated]
+
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    MAX_SIZE = 2 * 1024 * 1024  # 2MB
+
+    def post(self, request):
+        file = request.FILES.get("avatar")
+        if not file:
+            return error(message="请选择文件", http_status=400)
+
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext not in self.ALLOWED_EXTENSIONS:
+            return error(message="仅支持 JPG、PNG、GIF、WebP 格式", http_status=400)
+
+        if file.size > self.MAX_SIZE:
+            return error(message="文件大小不能超过 2MB", http_status=400)
+
+        filename = f"{uuid.uuid4().hex}{ext}"
+        avatar_dir = os.path.join(settings.MEDIA_ROOT, "avatar")
+        os.makedirs(avatar_dir, exist_ok=True)
+
+        filepath = os.path.join(avatar_dir, filename)
+        with open(filepath, "wb") as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        avatar_url = f"{settings.MEDIA_URL}avatar/{filename}"
+        request.user.avatar = avatar_url
+        request.user.save(update_fields=["avatar"])
+
+        return success(data={"avatar": avatar_url})
 
 
 class ChangePasswordView(APIView):

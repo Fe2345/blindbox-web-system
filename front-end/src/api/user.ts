@@ -44,6 +44,12 @@ export function changePassword(data: { oldPassword: string; newPassword: string 
   return request.post('/user/change-password/', data)
 }
 
+export function uploadAvatar(file: File) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  return request.post('/user/avatar/', formData)
+}
+
 export function getDivisions(parentCode?: string) {
   const params: Record<string, string> = {}
   if (parentCode) params.parent_code = parentCode

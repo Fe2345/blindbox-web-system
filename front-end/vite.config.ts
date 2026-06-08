@@ -33,6 +33,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: frontendPort,
       proxy: {
+        '/media': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
         '/user/api': {
           target: backendUrl,
           changeOrigin: true,
