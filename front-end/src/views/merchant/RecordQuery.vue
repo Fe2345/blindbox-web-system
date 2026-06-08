@@ -49,19 +49,7 @@ const keyword = ref('')
 const typeFilter = ref('')
 const dateRange = ref<[Date, Date] | null>(null)
 
-const filtered = computed(() => {
-  let list = recordStore.list
-  if (typeFilter.value) list = list.filter((r) => r.type === typeFilter.value)
-  if (keyword.value) list = list.filter((r) => r.productName.includes(keyword.value))
-  if (dateRange.value) {
-    const [start, end] = dateRange.value
-    list = list.filter((r) => {
-      const d = new Date(r.createdAt)
-      return d >= start && d <= new Date(end.getTime() + 86400000)
-    })
-  }
-  return list
-})
+const filtered = computed(() => recordStore.list)
 
 function recordTypeLabel(t: string) {
   const map: Record<string, string> = { inventory: '库存记录', shipment: '发货记录', status_change: '状态变化' }
@@ -75,7 +63,12 @@ function recordTypeColor(t: string) {
 
 async function loadData() {
   loading.value = true
-  await recordStore.fetchList()
+  await recordStore.fetchList({
+    type: typeFilter.value || undefined,
+    keyword: keyword.value || undefined,
+    startDate: dateRange.value?.[0] || undefined,
+    endDate: dateRange.value?.[1] || undefined,
+  })
   loading.value = false
 }
 
