@@ -31,6 +31,14 @@ export const useAssetStore = defineStore('asset', () => {
     return res
   }
 
+  async function bulkRecycle(data: assetApi.BulkRecyclePayload) {
+    const res: any = await assetApi.bulkRecycleAssets(data)
+    if (res.code === 200) {
+      await fetchAssets()
+    }
+    return res
+  }
+
   async function ship(id: string) {
     const res: any = await assetApi.shipAsset(id)
     if (res.code === 200) {
@@ -47,5 +55,5 @@ export const useAssetStore = defineStore('asset', () => {
     return res
   }
 
-  return { assets, currentAsset, fetchAssets, fetchAssetDetail, recycle, ship, publishExchange }
+  return { assets, currentAsset, fetchAssets, fetchAssetDetail, recycle, bulkRecycle, ship, publishExchange }
 })

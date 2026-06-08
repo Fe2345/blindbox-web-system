@@ -30,6 +30,7 @@ export interface BlindBoxPrize {
 
 export interface DrawResult {
   id: string
+  assetId: string
   prizeId: string
   prizeName: string
   prizeImage: string
@@ -42,6 +43,16 @@ export interface DrawResult {
   drawType: 'real' | 'simulation'
   drawStatus: 'success' | 'failed'
   drawTime: string
+}
+
+export interface DrawBatchResult {
+  batchNo: string
+  count: number
+  totalCostPoints: number
+  remainingPoints: number
+  blindBoxId: string
+  blindBoxName: string
+  results: DrawResult[]
 }
 
 export interface AdminBlindBox {

@@ -142,11 +142,12 @@ class DrawResultSerializer(serializers.ModelSerializer):
     blindbox_id = serializers.PrimaryKeyRelatedField(source="blindbox", read_only=True)
     blindbox_name = serializers.CharField(source="blindbox.name", read_only=True)
     prize_id = serializers.PrimaryKeyRelatedField(source="prize", read_only=True)
+    asset_id = serializers.PrimaryKeyRelatedField(source="asset", read_only=True)
 
     class Meta:
         model = DrawRecord
         fields = [
-            "id", "prize_id", "prize_name", "prize_image", "rarity",
+            "id", "asset_id", "prize_id", "prize_name", "prize_image", "rarity",
             "blindbox_id", "blindbox_name",
             "cost_points", "remaining_points",
             "batch_no", "draw_type", "draw_status",
