@@ -189,3 +189,70 @@ class MerchantRegisterSerializer(serializers.Serializer):
         if not re.match(r"^1[3-9]\d{9}$", value):
             raise serializers.ValidationError("请输入有效的 11 位手机号")
         return value
+
+
+# ==================== 管理端 ====================
+
+
+class AdminMerchantSerializer(serializers.ModelSerializer):
+    """商家列表序列化器（管理端）"""
+
+    class Meta:
+        model = Merchant
+        fields = [
+            "id", "name", "contact_name", "phone", "email", "license",
+            "status", "credit_score", "review_note", "reviewed_at",
+            "created_at",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["supply_count"] = instance.products.count()
+        data["violation_count"] = 0  # TODO: 后续接入违规记录
+        return keys_to_camel(data)
+
+
+class AdminMerchantReviewSerializer(serializers.Serializer):
+    """商家审核序列化器"""
+
+    action = serializers.ChoiceField(choices=["approve", "reject"])
+    note = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
+
+
+class AdminMerchantStatusSerializer(serializers.Serializer):
+    """商家状态切换序列化器"""
+
+    status = serializers.ChoiceField(choices=Merchant.Status.choices)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
+
+
+class AdminProductSerializer(serializers.ModelSerializer):
+    """商品列表序列化器（管理端）"""
+
+    merchantName = serializers.CharField(source="merchant.name", read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "name", "image", "category", "rarity", "description",
+            "estimated_points", "status", "review_note",
+            "merchantName", "created_at",
+        ]
+
+    def to_representation(self, instance):
+        return keys_to_camel(super().to_representation(instance))
+
+
+class AdminProductReviewSerializer(serializers.Serializer):
+    """商品审核序列化器"""
+
+    action = serializers.ChoiceField(choices=["approve", "reject"])
+    note = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))

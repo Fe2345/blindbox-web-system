@@ -3,17 +3,15 @@ import { ref } from 'vue'
 import * as authApi from '@/api/admin/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref(localStorage.getItem('admin_token') || '')
   const adminInfo = ref<any>(null)
-  const isLoggedIn = ref(!!token.value)
+  const isLoggedIn = ref(localStorage.getItem('admin_logged_in') === 'true')
 
   async function login(username: string, password: string) {
     const res: any = await authApi.adminLogin({ username, password })
     if (res.code === 200) {
-      token.value = res.data.token
       adminInfo.value = res.data.user
       isLoggedIn.value = true
-      localStorage.setItem('admin_token', res.data.token)
+      localStorage.setItem('admin_logged_in', 'true')
     }
     return res
   }
@@ -24,12 +22,16 @@ export const useAuthStore = defineStore('auth', () => {
     return res
   }
 
-  function logout() {
-    token.value = ''
+  async function logout() {
+    try {
+      await authApi.adminLogout()
+    } catch {
+      // 忽略网络错误，确保本地状态清理
+    }
     adminInfo.value = null
     isLoggedIn.value = false
-    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_logged_in')
   }
 
-  return { token, adminInfo, isLoggedIn, login, fetchInfo, logout }
+  return { adminInfo, isLoggedIn, login, fetchInfo, logout }
 })

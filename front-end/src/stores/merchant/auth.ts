@@ -3,17 +3,15 @@ import { ref } from 'vue'
 import * as authApi from '@/api/merchant/auth'
 
 export const useMerchantAuthStore = defineStore('merchantAuth', () => {
-  const token = ref(localStorage.getItem('merchant_token') || '')
   const merchantInfo = ref<any>(null)
-  const isLoggedIn = ref(!!token.value)
+  const isLoggedIn = ref(localStorage.getItem('merchant_logged_in') === 'true')
 
   async function login(username: string, password: string) {
     const res: any = await authApi.merchantLogin({ username, password })
     if (res.code === 200) {
-      token.value = res.data.token
       merchantInfo.value = res.data.merchant
       isLoggedIn.value = true
-      localStorage.setItem('merchant_token', res.data.token)
+      localStorage.setItem('merchant_logged_in', 'true')
     }
     return res
   }
@@ -24,12 +22,16 @@ export const useMerchantAuthStore = defineStore('merchantAuth', () => {
     return res
   }
 
-  function logout() {
-    token.value = ''
+  async function logout() {
+    try {
+      await authApi.merchantLogout()
+    } catch {
+      // 忽略网络错误，确保本地状态清理
+    }
     merchantInfo.value = null
     isLoggedIn.value = false
-    localStorage.removeItem('merchant_token')
+    localStorage.removeItem('merchant_logged_in')
   }
 
-  return { token, merchantInfo, isLoggedIn, login, fetchInfo, logout }
+  return { merchantInfo, isLoggedIn, login, fetchInfo, logout }
 })

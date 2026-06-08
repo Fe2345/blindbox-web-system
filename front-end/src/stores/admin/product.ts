@@ -18,11 +18,23 @@ export const useProductStore = defineStore('product', () => {
     return res
   }
 
+  async function save(data: any) {
+    const res: any = await api.saveProduct(data)
+    if (res.code === 200) await fetchList()
+    return res
+  }
+
+  async function update(id: string, data: any) {
+    const res: any = await api.updateProduct(id, data)
+    if (res.code === 200) await fetchList()
+    return res
+  }
+
   async function offline(id: string) {
     const res: any = await api.offlineProduct(id)
     if (res.code === 200) await fetchList()
     return res
   }
 
-  return { list, fetchList, review, offline }
+  return { list, fetchList, review, save, update, offline }
 })

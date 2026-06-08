@@ -36,12 +36,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('merchant_token')
-  if (!to.meta.noAuth && !token) {
-    next('/login')
-  } else {
+  if (to.meta.noAuth) {
     next()
+    return
   }
+  if (localStorage.getItem('merchant_logged_in') !== 'true') {
+    next('/login')
+    return
+  }
+  next()
 })
 
 export default router

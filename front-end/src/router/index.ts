@@ -43,9 +43,15 @@ router.beforeEach((to, _from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   if (!to.meta.noAuth && !isLoggedIn) {
     next('/login')
-  } else {
-    next()
+    return
   }
+  if (!to.meta.noAuth && localStorage.getItem('user_role') !== 'user') {
+    localStorage.removeItem('isLoggedIn')
+    localStorage.removeItem('user_role')
+    next('/login')
+    return
+  }
+  next()
 })
 
 export default router
