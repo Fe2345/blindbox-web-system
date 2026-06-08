@@ -99,3 +99,26 @@ class UserInfoSerializer(serializers.Serializer):
         if not re.match(r"^1[3-9]\d{9}$", value):
             raise serializers.ValidationError("请输入有效的 11 位手机号")
         return value
+
+
+# ==================== 管理端 ====================
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """用户列表序列化器（管理端）"""
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "phone", "role", "is_active", "date_joined", "last_login"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data = keys_to_camel(data)
+        data["avatar"] = instance.avatar
+        return data
+
+
+class AdminUserStatusSerializer(serializers.Serializer):
+    """用户状态切换序列化器"""
+
+    is_active = serializers.BooleanField()

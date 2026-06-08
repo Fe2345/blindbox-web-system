@@ -4,18 +4,21 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.db import models
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from apps.common.permissions import IsAuthenticated
+from apps.common.permissions import IsAdmin, IsAuthenticated
 from apps.common.response import error, flatten_errors, success
 
 from .models import Address, Division, User
 from .serializers import (
     AddressSerializer,
     AddressWriteSerializer,
+    AdminUserSerializer,
+    AdminUserStatusSerializer,
     DivisionSerializer,
     LoginSerializer,
     RegisterSerializer,
@@ -23,6 +26,10 @@ from .serializers import (
 )
 
 logger = logging.getLogger("blindbox")
+
+
+class CSRFExemptView(APIView):
+    pass
 
 
 class DivisionListView(APIView):
@@ -342,3 +349,46 @@ class ChangePasswordView(APIView):
         user.set_password(new_password)
         user.save()
         return success(message="密码修改成功")
+
+
+# ==================== 管理端 ====================
+
+
+class AdminUserListView(CSRFExemptView):
+    """用户列表（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        qs = User.objects.filter(role="user").order_by("-date_joined")
+        keyword = request.query_params.get("keyword")
+        if keyword:
+            qs = qs.filter(
+                models.Q(username__icontains=keyword) | models.Q(phone__icontains=keyword)
+            )
+        status = request.query_params.get("status")
+        if status == "active":
+            qs = qs.filter(is_active=True)
+        elif status == "frozen":
+            qs = qs.filter(is_active=False)
+        return success(data=AdminUserSerializer(qs[:100], many=True).data)
+
+
+class AdminUserStatusView(CSRFExemptView):
+    """用户状态切换（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, role="user")
+        except User.DoesNotExist:
+            return error(message="用户不存在", http_status=404)
+
+        serializer = AdminUserStatusSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        user.is_active = serializer.validated_data["is_active"]
+        user.save(update_fields=["is_active"])
+        return success(data=AdminUserSerializer(user).data)
