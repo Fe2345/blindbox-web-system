@@ -91,18 +91,19 @@ class AdminOrderShipView(CSRFExemptView):
     permission_classes = [IsAdmin]
 
     def post(self, request, pk):
-        try:
-            order = Order.objects.get(pk=pk, status="pending")
-        except Order.DoesNotExist:
-            return error(message="订单不存在或不在待处理状态", http_status=404)
-
         serializer = AdminOrderShipSerializer(data=request.data)
         if not serializer.is_valid():
             return error(message=flatten_errors(serializer.errors), http_status=400)
 
-        order.logistics_company = serializer.validated_data["logistics_company"]
-        order.tracking_no = serializer.validated_data["tracking_no"]
-        order.shipped_at = timezone.now()
-        order.status = "shipped"
-        order.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
+        with transaction.atomic():
+            try:
+                order = Order.objects.select_for_update().get(pk=pk, status=Order.Status.PENDING)
+            except Order.DoesNotExist:
+                return error(message="订单不存在或不在待处理状态", http_status=404)
+
+            order.logistics_company = serializer.validated_data["logistics_company"]
+            order.tracking_no = serializer.validated_data["tracking_no"]
+            order.shipped_at = timezone.now()
+            order.status = Order.Status.SHIPPED
+            order.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
         return success(data=AdminOrderSerializer(order).data)
