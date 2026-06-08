@@ -11,7 +11,7 @@
 
     <div class="filter-bar" style="margin-top: 16px">
       <el-select v-model="filterType" placeholder="类型筛选" clearable style="width: 150px">
-        <el-option label="盲盒消耗" value="blindbox_consume" />
+        <el-option label="盲盒消费" value="blindbox_consume" />
         <el-option label="回收返还" value="recycle_return" />
         <el-option label="系统调整" value="system_adjust" />
       </el-select>
