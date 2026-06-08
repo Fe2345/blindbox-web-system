@@ -496,7 +496,7 @@ class AdminMerchantReviewView(CSRFExemptView):
             merchant.status = "rejected"
         merchant.review_note = d.get("note", "")
         merchant.reviewed_at = timezone.now()
-        merchant.save()
+        merchant.save(update_fields=["status", "review_note", "reviewed_at"])
         return success(data=AdminMerchantSerializer(merchant).data)
 
 
@@ -554,5 +554,5 @@ class AdminProductReviewView(CSRFExemptView):
         else:
             product.status = "rejected"
         product.review_note = d.get("note", "")
-        product.save()
+        product.save(update_fields=["status", "review_note"])
         return success(data=AdminProductSerializer(product).data)

@@ -207,10 +207,9 @@ class AdminMerchantSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data = keys_to_camel(data)
-        data["supplyCount"] = instance.products.count()
-        data["violationCount"] = 0  # TODO: 后续接入违规记录
-        return data
+        data["supply_count"] = instance.products.count()
+        data["violation_count"] = 0  # TODO: 后续接入违规记录
+        return keys_to_camel(data)
 
 
 class AdminMerchantReviewSerializer(serializers.Serializer):
