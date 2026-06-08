@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.common.permissions import IsMerchant
-from apps.common.response import success, error
+from apps.common.permissions import IsAdmin, IsMerchant
+from apps.common.response import success, error, flatten_errors
 from apps.accounts.models import User
 from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product, ShipmentTask
 from apps.merchant.serializers import (
@@ -19,7 +19,14 @@ from apps.merchant.serializers import (
     ProductSerializer, ProductWriteSerializer, ProductUpdateSerializer,
     InventorySerializer, InventoryUpdateSerializer, InventoryRecordSerializer,
     ShipmentTaskSerializer, ShipmentConfirmSerializer,
+    AdminMerchantSerializer, AdminMerchantReviewSerializer,
+    AdminMerchantStatusSerializer, AdminProductSerializer,
+    AdminProductReviewSerializer,
 )
+
+
+class CSRFExemptView(APIView):
+    pass
 
 
 class MerchantRegisterView(APIView):
@@ -446,3 +453,106 @@ class RecordListView(APIView):
         # 按时间倒序
         records.sort(key=lambda x: x["createdAt"], reverse=True)
         return success(records)
+
+
+# ==================== 管理端 ====================
+
+
+class AdminMerchantListView(CSRFExemptView):
+    """商家列表（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        qs = Merchant.objects.all().order_by("-created_at")
+        status = request.query_params.get("status")
+        if status:
+            qs = qs.filter(status=status)
+        keyword = request.query_params.get("keyword")
+        if keyword:
+            qs = qs.filter(name__icontains=keyword)
+        return success(data=AdminMerchantSerializer(qs[:100], many=True).data)
+
+
+class AdminMerchantReviewView(CSRFExemptView):
+    """商家审核（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        try:
+            merchant = Merchant.objects.get(pk=pk, status="pending")
+        except Merchant.DoesNotExist:
+            return error(message="商家不存在或不在待审核状态", http_status=404)
+
+        serializer = AdminMerchantReviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        d = serializer.validated_data
+        if d["action"] == "approve":
+            merchant.status = "approved"
+        else:
+            merchant.status = "rejected"
+        merchant.review_note = d.get("note", "")
+        merchant.reviewed_at = timezone.now()
+        merchant.save()
+        return success(data=AdminMerchantSerializer(merchant).data)
+
+
+class AdminMerchantStatusView(CSRFExemptView):
+    """商家状态切换（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def put(self, request, pk):
+        try:
+            merchant = Merchant.objects.get(pk=pk)
+        except Merchant.DoesNotExist:
+            return error(message="商家不存在", http_status=404)
+
+        serializer = AdminMerchantStatusSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        merchant.status = serializer.validated_data["status"]
+        merchant.save(update_fields=["status"])
+        return success(data=AdminMerchantSerializer(merchant).data)
+
+
+class AdminProductListView(CSRFExemptView):
+    """商品列表（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        qs = Product.objects.select_related("merchant").all().order_by("-created_at")
+        status = request.query_params.get("status")
+        if status:
+            qs = qs.filter(status=status)
+        return success(data=AdminProductSerializer(qs[:100], many=True).data)
+
+
+class AdminProductReviewView(CSRFExemptView):
+    """商品审核（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        try:
+            product = Product.objects.get(pk=pk, status="pending")
+        except Product.DoesNotExist:
+            return error(message="商品不存在或不在待审核状态", http_status=404)
+
+        serializer = AdminProductReviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        d = serializer.validated_data
+        if d["action"] == "approve":
+            product.status = "approved"
+        else:
+            product.status = "rejected"
+        product.review_note = d.get("note", "")
+        product.save()
+        return success(data=AdminProductSerializer(product).data)
