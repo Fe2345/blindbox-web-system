@@ -5,7 +5,7 @@ from apps.merchant.views import (
     MerchantLoginView, MerchantInfoView,
     MerchantApplicationView,
     MerchantDashboardView,
-    ProductListView, ProductDetailView,
+    ProductListView, ProductDetailView, ProductImageUploadView,
     InventoryListView, InventoryUpdateView, InventoryRecordListView,
     ShipmentTaskListView, ShipmentTaskDetailView, ShipmentConfirmView,
     RecordListView,
@@ -22,6 +22,8 @@ urlpatterns = [
     path("dashboard", MerchantDashboardView.as_view(), name="merchant-dashboard"),
     # 商品（GET 列表 / POST 新增）
     path("products", ProductListView.as_view(), name="merchant-product-list"),
+    # 商品图片上传（必须在 <int:pk> 之前）
+    path("products/upload-image", ProductImageUploadView.as_view(), name="merchant-product-image-upload"),
     # 商品（GET 详情 / PUT 编辑）
     path("products/<int:pk>", ProductDetailView.as_view(), name="merchant-product-detail"),
     # 库存

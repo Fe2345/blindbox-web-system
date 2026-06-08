@@ -1,3 +1,7 @@
+import os
+import uuid
+
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -205,6 +209,39 @@ class ProductDetailView(APIView):
 
         product.save()
         return success(None, "修改成功")
+
+
+class ProductImageUploadView(APIView):
+    """上传商品图片 — POST /merchant/api/products/upload-image"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    MAX_SIZE = 2 * 1024 * 1024  # 2MB
+
+    def post(self, request):
+        file = request.FILES.get("image")
+        if not file:
+            return error("请选择文件", status.HTTP_400_BAD_REQUEST)
+
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext not in self.ALLOWED_EXTENSIONS:
+            return error("仅支持 JPG、PNG、GIF、WebP 格式", status.HTTP_400_BAD_REQUEST)
+
+        if file.size > self.MAX_SIZE:
+            return error("文件大小不能超过 2MB", status.HTTP_400_BAD_REQUEST)
+
+        filename = f"{uuid.uuid4().hex}{ext}"
+        product_dir = os.path.join(settings.MEDIA_ROOT, "product")
+        os.makedirs(product_dir, exist_ok=True)
+
+        filepath = os.path.join(product_dir, filename)
+        with open(filepath, "wb") as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+
+        image_url = f"{settings.MEDIA_URL}product/{filename}"
+        return success(data={"image": image_url})
 
 
 class InventoryListView(APIView):
