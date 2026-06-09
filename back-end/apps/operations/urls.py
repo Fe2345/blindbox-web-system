@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("dashboard", views.AdminDashboardView.as_view(), name="admin-dashboard"),
     path("rules", views.AdminRuleConfigView.as_view(), name="admin-rule-config"),
     path("logs", views.AdminOpLogListView.as_view(), name="admin-op-log"),
     path("exceptions", views.AdminExceptionListView.as_view(), name="admin-exception-list"),

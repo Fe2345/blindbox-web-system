@@ -3,6 +3,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -25,7 +26,7 @@ from apps.merchant.serializers import (
     AdminMerchantSerializer, AdminMerchantReviewSerializer,
     AdminMerchantStatusSerializer, AdminProductSerializer,
     AdminProductReviewSerializer, AdminProductWriteSerializer,
-    AdminProductUpdateSerializer,
+    AdminProductUpdateSerializer, MerchantOrderSerializer,
 )
 
 
@@ -389,11 +390,30 @@ class ShipmentConfirmView(APIView):
             return error(ser.errors, status.HTTP_400_BAD_REQUEST)
 
         data = ser.validated_data
-        task.status = ShipmentTask.Status.SHIPPED
-        task.logistics_company = data["logistics_company"]
-        task.tracking_no = data["tracking_no"]
-        task.shipped_at = timezone.now()
-        task.save()
+
+        with transaction.atomic():
+            task.status = ShipmentTask.Status.SHIPPED
+            task.logistics_company = data["logistics_company"]
+            task.tracking_no = data["tracking_no"]
+            task.shipped_at = timezone.now()
+            task.save()
+
+            # 同步更新对应的 Order 和资产状态，使用户端能看到已发货
+            from apps.orders.models import Order
+            from apps.assets.models import Asset
+            order = Order.objects.filter(
+                order_no=task.order_no, status=Order.Status.PENDING
+            ).first()
+            if order:
+                order.logistics_company = data["logistics_company"]
+                order.tracking_no = data["tracking_no"]
+                order.shipped_at = timezone.now()
+                order.status = Order.Status.SHIPPED
+                order.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
+                if order.asset:
+                    order.asset.status = Asset.Status.SHIPPED
+                    order.asset.save(update_fields=["status"])
+
         return success(None, "发货成功")
 
 
@@ -670,3 +690,22 @@ class AdminProductOfflineView(CSRFExemptView):
         product.status = "offline"
         product.save(update_fields=["status"])
         return success(data=AdminProductSerializer(product).data)
+
+
+class MerchantOrderListView(APIView):
+    """商家订单列表 — GET /merchant/api/orders?status="""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def get(self, request):
+        from apps.orders.models import Order
+        merchant = get_object_or_404(Merchant, user=request.user)
+        qs = Order.objects.filter(
+            asset__product__merchant=merchant
+        ).select_related("user", "asset").order_by("-created_at")
+
+        status_filter = request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+
+        return success(MerchantOrderSerializer(qs[:100], many=True).data)

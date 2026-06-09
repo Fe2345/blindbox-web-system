@@ -58,20 +58,35 @@ class AdminOrderSerializer(serializers.ModelSerializer):
     orderNo = serializers.CharField(source="order_no", read_only=True)
     assetName = serializers.CharField(source="asset_name", read_only=True)
     assetImage = serializers.CharField(source="asset_image", read_only=True)
-    userName = serializers.CharField(source="user.username", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
     createdAt = serializers.DateTimeField(source="created_at", read_only=True)
     shippedAt = serializers.DateTimeField(source="shipped_at", read_only=True)
     completedAt = serializers.DateTimeField(source="completed_at", read_only=True)
+    address = serializers.SerializerMethodField()
+    logistics = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             "id", "orderNo", "type", "assetName", "assetImage",
-            "status", "userName",
-            "receiver_name", "receiver_phone", "receiver_address",
-            "logistics_company", "tracking_no",
+            "status", "username", "address", "logistics",
             "createdAt", "shippedAt", "completedAt",
         ]
+
+    def get_address(self, obj):
+        return {
+            "name": obj.receiver_name,
+            "phone": obj.receiver_phone,
+            "fullAddress": obj.receiver_address,
+        }
+
+    def get_logistics(self, obj):
+        if not obj.logistics_company and not obj.tracking_no:
+            return None
+        return {
+            "company": obj.logistics_company,
+            "trackingNo": obj.tracking_no,
+        }
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -81,8 +96,5 @@ class AdminOrderSerializer(serializers.ModelSerializer):
 class AdminOrderShipSerializer(serializers.Serializer):
     """订单发货序列化器"""
 
-    logistics_company = serializers.CharField(max_length=100)
-    tracking_no = serializers.CharField(max_length=100)
-
-    def to_internal_value(self, data):
-        return super().to_internal_value(keys_to_snake(data))
+    company = serializers.CharField(max_length=100)
+    trackingNo = serializers.CharField(max_length=100)

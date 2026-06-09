@@ -293,3 +293,32 @@ class AdminProductUpdateSerializer(serializers.Serializer):
 
     def to_internal_value(self, data):
         return super().to_internal_value(keys_to_snake(data))
+
+
+# ---------- merchant order ----------
+
+class MerchantOrderSerializer(serializers.ModelSerializer):
+    """商家订单列表序列化器"""
+
+    orderNo = serializers.CharField(source="order_no", read_only=True)
+    assetName = serializers.CharField(source="asset_name", read_only=True)
+    assetImage = serializers.CharField(source="asset_image", read_only=True)
+    userName = serializers.CharField(source="user.username", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    shippedAt = serializers.DateTimeField(source="shipped_at", read_only=True)
+    completedAt = serializers.DateTimeField(source="completed_at", read_only=True)
+
+    class Meta:
+        from apps.orders.models import Order
+        model = Order
+        fields = [
+            "id", "orderNo", "type", "assetName", "assetImage",
+            "status", "userName",
+            "receiver_name", "receiver_phone", "receiver_address",
+            "logistics_company", "tracking_no",
+            "createdAt", "shippedAt", "completedAt",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return keys_to_camel(data)
