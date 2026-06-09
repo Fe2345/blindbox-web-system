@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.common.utils import keys_to_camel, keys_to_snake
+from apps.common.valuation import resolve_estimated_points, resolve_recyclable_points
 
 from .models import BlindBox, Prize, DrawRecord
 
@@ -9,6 +10,9 @@ from .models import BlindBox, Prize, DrawRecord
 
 
 class PrizeSerializer(serializers.ModelSerializer):
+    probability = serializers.DecimalField(max_digits=7, decimal_places=4, coerce_to_string=False)
+    estimated_points = serializers.SerializerMethodField()
+    recyclable_points = serializers.SerializerMethodField()
     """奖品读取序列化器（用户端）"""
 
     class Meta:
@@ -17,7 +21,14 @@ class PrizeSerializer(serializers.ModelSerializer):
             "id", "name", "image", "rarity",
             "probability", "weight", "quantity", "remaining_quantity",
             "is_active", "ip_name_snapshot",
+            "estimated_points", "recyclable_points",
         ]
+
+    def get_estimated_points(self, obj):
+        return resolve_estimated_points(obj, obj.blindbox.cost_points)
+
+    def get_recyclable_points(self, obj):
+        return resolve_recyclable_points(obj, obj.blindbox.cost_points)
 
     def to_representation(self, instance):
         return keys_to_camel(super().to_representation(instance))
@@ -29,6 +40,9 @@ class AdminPrizeSerializer(serializers.ModelSerializer):
     product_id = serializers.PrimaryKeyRelatedField(
         source="product", read_only=True,
     )
+    probability = serializers.DecimalField(max_digits=7, decimal_places=4, coerce_to_string=False)
+    estimated_points = serializers.SerializerMethodField()
+    recyclable_points = serializers.SerializerMethodField()
 
     class Meta:
         model = Prize
@@ -36,8 +50,15 @@ class AdminPrizeSerializer(serializers.ModelSerializer):
             "id", "product_id", "name", "image", "rarity",
             "probability", "weight", "quantity", "remaining_quantity",
             "is_active", "ip_name_snapshot",
+            "estimated_points", "recyclable_points",
             "created_at", "updated_at",
         ]
+
+    def get_estimated_points(self, obj):
+        return resolve_estimated_points(obj, obj.blindbox.cost_points)
+
+    def get_recyclable_points(self, obj):
+        return resolve_recyclable_points(obj, obj.blindbox.cost_points)
 
     def to_representation(self, instance):
         return keys_to_camel(super().to_representation(instance))
@@ -51,7 +72,7 @@ class PrizeWriteSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     image = serializers.CharField(max_length=500)
     rarity = serializers.ChoiceField(choices=Prize.Rarity.choices)
-    probability = serializers.IntegerField(min_value=0, max_value=100)
+    probability = serializers.DecimalField(max_digits=7, decimal_places=4, min_value=0, max_value=100)
     weight = serializers.IntegerField(min_value=0, default=0)
     quantity = serializers.IntegerField(min_value=0, default=0)
     remaining_quantity = serializers.IntegerField(min_value=0, default=0)
@@ -105,7 +126,7 @@ class BlindBoxWriteSerializer(serializers.Serializer):
     """盲盒写入序列化器"""
 
     name = serializers.CharField(max_length=100)
-    cover = serializers.CharField(max_length=500)
+    cover = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
     description = serializers.CharField(required=False, allow_blank=True, default="")
     category = serializers.CharField(max_length=50)
     ip_name = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")

@@ -5,6 +5,8 @@ import uuid
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.db import models
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -28,6 +30,7 @@ from .serializers import (
 logger = logging.getLogger("blindbox")
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class CSRFExemptView(APIView):
     pass
 
@@ -417,7 +420,7 @@ class AdminUserStatusView(CSRFExemptView):
         return success(data=AdminUserSerializer(user).data)
 
 
-class AdminLoginView(APIView):
+class AdminLoginView(CSRFExemptView):
     """管理员登录，返回 JWT Token 并设置 httpOnly cookie"""
 
     def post(self, request):

@@ -1,6 +1,6 @@
 export interface PointsRecord {
   id: string
-  type: 'blindbox_consume' | 'recycle_return' | 'system_adjust'
+  type: 'blindbox_consume' | 'recycle_return' | 'system_adjust' | 'recharge'
   amount: number
   balance: number
   description: string

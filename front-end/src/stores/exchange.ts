@@ -23,6 +23,9 @@ export const useExchangeStore = defineStore('exchange', () => {
 
   async function applyForExchange(postId: string, data: { assetId: string; remark: string }) {
     const res: any = await exchangeApi.applyExchange(postId, data)
+    if (res.code === 200) {
+      await fetchPosts()
+    }
     return res
   }
 
