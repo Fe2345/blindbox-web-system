@@ -22,4 +22,6 @@ dist-ssr
 *.sw?
 *.pyc
 .env
+.venv/
 scripts/Web_export_*.sql
+back-end/media/product/

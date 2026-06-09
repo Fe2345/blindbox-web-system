@@ -3,8 +3,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 
+from apps.accounts.models import User
 from apps.common.permissions import IsAdmin
 from apps.common.response import success, error, flatten_errors
+from apps.merchant.models import Merchant, Product
+from apps.orders.models import Order
 
 from .models import RuleConfig, OpLog, ExceptionRecord, TransactionLedger
 from .serializers import (
@@ -92,6 +95,34 @@ class AdminExceptionResolveView(CSRFExemptView):
         record.resolved_at = timezone.now()
         record.save(update_fields=["result", "status", "resolved_at"])
         return success(data=ExceptionRecordSerializer(record).data)
+
+
+class AdminDashboardView(CSRFExemptView):
+    """管理端工作台 — GET /admin/api/dashboard"""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        user_count = User.objects.filter(role="user").count()
+        pending_merchants = Merchant.objects.filter(status=Merchant.Status.PENDING).count()
+        pending_products = Product.objects.filter(status=Product.Status.PENDING).count()
+        pending_orders = Order.objects.filter(status=Order.Status.PENDING).count()
+
+        todos = []
+        if pending_merchants > 0:
+            todos.append({"id": "merchant", "title": f"{pending_merchants} 个商家待审核", "link": "/merchant-review"})
+        if pending_products > 0:
+            todos.append({"id": "product", "title": f"{pending_products} 个商品待审核", "link": "/product-review"})
+        if pending_orders > 0:
+            todos.append({"id": "order", "title": f"{pending_orders} 个订单待处理", "link": "/order-manage"})
+
+        return success(data={
+            "userCount": user_count,
+            "pendingMerchants": pending_merchants,
+            "pendingProducts": pending_products,
+            "pendingOrders": pending_orders,
+            "todos": todos,
+        })
 
 
 class AdminLedgerListView(CSRFExemptView):

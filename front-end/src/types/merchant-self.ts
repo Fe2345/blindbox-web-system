@@ -84,3 +84,21 @@ export interface MerchantRecord {
   detail: string
   createdAt: string
 }
+
+export interface MerchantOrder {
+  id: string
+  orderNo: string
+  type: 'shipment' | 'exchange'
+  assetName: string
+  assetImage: string
+  status: 'pending' | 'shipped' | 'completed'
+  userName: string
+  receiverName: string
+  receiverPhone: string
+  receiverAddress: string
+  logisticsCompany: string
+  trackingNo: string
+  createdAt: string
+  shippedAt: string | null
+  completedAt: string | null
+}

@@ -43,6 +43,11 @@
           <span>发货管理</span>
         </el-menu-item>
 
+        <el-menu-item index="/orders">
+          <el-icon><List /></el-icon>
+          <span>订单管理</span>
+        </el-menu-item>
+
         <el-menu-item index="/records">
           <el-icon><Notebook /></el-icon>
           <span>记录查询</span>
@@ -90,7 +95,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMerchantAuthStore } from '@/stores/merchant/auth'
 import {
   DataBoard, Document, Goods, Box, Van, Notebook,
-  UserFilled, ArrowDown,
+  UserFilled, ArrowDown, List,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -116,6 +121,7 @@ const menuTitleMap: Record<string, string> = {
   '/products/submit': '商品提交',
   '/inventory': '库存管理',
   '/shipments': '发货管理',
+  '/orders': '订单管理',
   '/records': '记录查询',
 }
 

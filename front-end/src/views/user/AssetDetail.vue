@@ -129,7 +129,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAssetStore } from '@/stores/asset'
 import { usePointsStore } from '@/stores/points'
-import { ElMessage } from 'element-plus'
+import { getAddresses } from '@/api/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate, rarityLabel, rarityColor, assetStatusLabel, assetStatusType } from '@/utils/format'
 
 const route = useRoute()
@@ -209,6 +210,20 @@ async function handleRecycleSame(keepOneByProduct: boolean) {
 
 async function handleShip() {
   if (!asset.value) return
+  try {
+    const addrRes: any = await getAddresses()
+    if (addrRes.code !== 200 || !addrRes.data || addrRes.data.length === 0) {
+      await ElMessageBox.confirm('您还没有收货地址，请先去个人中心添加', '提示', {
+        confirmButtonText: '去添加',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+      router.push('/profile?tab=address')
+      return
+    }
+  } catch {
+    return
+  }
   const res = await assetStore.ship(asset.value.id)
   if (res.code === 200) {
     ElMessage.success('发货申请已提交')
