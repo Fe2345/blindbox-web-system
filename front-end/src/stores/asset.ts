@@ -8,11 +8,16 @@ export const useAssetStore = defineStore('asset', () => {
   const currentAsset = ref<Asset | null>(null)
 
   async function fetchAssets() {
-    const res: any = await assetApi.getAssets()
-    if (res.code === 200) {
-      assets.value = res.data
+    try {
+      const res: any = await assetApi.getAssets()
+      if (res.code === 200) {
+        assets.value = res.data || []
+      }
+      return res
+    } catch (e) {
+      console.error('[asset] fetchAssets failed:', e)
+      return { code: -1, message: '获取资产失败', data: [] }
     }
-    return res
   }
 
   async function fetchAssetDetail(id: string) {

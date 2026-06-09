@@ -9,6 +9,7 @@ class ExchangePostSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source="user.id", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
     asset_id = serializers.IntegerField(source="asset.id", read_only=True)
+    pending_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ExchangePost
@@ -24,8 +25,12 @@ class ExchangePostSerializer(serializers.ModelSerializer):
             "expect_description",
             "remark",
             "status",
+            "pending_count",
             "created_at",
         ]
+
+    def get_pending_count(self, obj):
+        return obj.applications.filter(status="pending").count()
 
     def to_representation(self, instance):
         return keys_to_camel(super().to_representation(instance))
