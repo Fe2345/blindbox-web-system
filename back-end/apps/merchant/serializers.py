@@ -174,6 +174,8 @@ class MerchantRegisterSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=150)
     password = serializers.CharField(min_length=6, max_length=128)
     phone = serializers.CharField(max_length=11)
+    merchant_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    contact_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
     def to_internal_value(self, data):
         return super().to_internal_value(keys_to_snake(data))

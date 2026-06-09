@@ -9,6 +9,7 @@ from apps.common.valuation import resolve_estimated_points, resolve_recyclable_p
 
 PROBABILITY_QUANT = Decimal("0.0001")
 SEARCH_STEP = Decimal("0.5")
+MIN_VALUE_WEIGHT_SHARE_RATIO = Decimal("0.10")
 RARITY_ORDER = ["SSR", "SR", "R", "N"]
 RARITY_LIMITS = {
     "SSR": (Decimal("0.5"), Decimal("12.0")),
@@ -24,6 +25,31 @@ def quantize_probability(value: Decimal) -> Decimal:
 
 def _item_rarity(item) -> str:
     return item["rarity"] if isinstance(item, dict) else item.rarity
+
+
+def _item_value(item, cost_points: int) -> Decimal:
+    return Decimal(max(resolve_estimated_points(item, cost_points), 1))
+
+
+def _item_recycle_value(item, cost_points: int) -> Decimal:
+    return Decimal(max(resolve_recyclable_points(item, cost_points), 0))
+
+
+def _value_weighted_shares(items, cost_points: int) -> list[Decimal]:
+    """Split one rarity total by value: higher estimated value means lower odds."""
+    if not items:
+        return []
+
+    raw_weights = [Decimal("1") / _item_value(item, cost_points) for item in items]
+    raw_total = sum(raw_weights)
+    if raw_total <= 0:
+        return [Decimal("1") / Decimal(len(items)) for _ in items]
+
+    raw_shares = [weight / raw_total for weight in raw_weights]
+    minimum_share = (Decimal("1") / Decimal(len(items))) * MIN_VALUE_WEIGHT_SHARE_RATIO
+    adjusted_shares = [max(share, minimum_share) for share in raw_shares]
+    adjusted_total = sum(adjusted_shares)
+    return [share / adjusted_total for share in adjusted_shares]
 
 
 def _candidate_values(rarity: str, only_rarity: bool = False):
@@ -72,22 +98,29 @@ def calculate_probability_plan(prizes, cost_points: int):
     rarities = [_item_rarity(item) for item in items]
     counts = Counter(rarities)
     present_rarities = [rarity for rarity in RARITY_ORDER if rarity in counts]
-    values_by_rarity = defaultdict(list)
-    recycle_by_rarity = defaultdict(list)
+    items_by_rarity = defaultdict(list)
 
     for item in items:
         rarity = _item_rarity(item)
-        values_by_rarity[rarity].append(Decimal(resolve_estimated_points(item, cost_points)))
-        recycle_by_rarity[rarity].append(Decimal(resolve_recyclable_points(item, cost_points)))
+        items_by_rarity[rarity].append(item)
 
-    avg_values = {
-        rarity: sum(values) / Decimal(len(values))
-        for rarity, values in values_by_rarity.items()
+    rarity_item_shares = {
+        rarity: _value_weighted_shares(rarity_items, cost_points)
+        for rarity, rarity_items in items_by_rarity.items()
     }
-    avg_recycle_values = {
-        rarity: sum(values) / Decimal(len(values))
-        for rarity, values in recycle_by_rarity.items()
-    }
+
+    avg_values = {}
+    avg_recycle_values = {}
+    for rarity, rarity_items in items_by_rarity.items():
+        shares = rarity_item_shares[rarity]
+        avg_values[rarity] = sum(
+            share * _item_value(item, cost_points)
+            for item, share in zip(rarity_items, shares)
+        )
+        avg_recycle_values[rarity] = sum(
+            share * _item_recycle_value(item, cost_points)
+            for item, share in zip(rarity_items, shares)
+        )
 
     if len(present_rarities) == 1:
         totals = {present_rarities[0]: Decimal("100.0")}
@@ -120,11 +153,18 @@ def calculate_probability_plan(prizes, cost_points: int):
         else:
             _, totals, display_ev, recycle_ev = best
 
-    per_item_by_rarity = {
-        rarity: quantize_probability(total / Decimal(counts[rarity]))
-        for rarity, total in totals.items()
-    }
-    probabilities = [per_item_by_rarity[rarity] for rarity in rarities]
+    indexes_by_rarity = defaultdict(list)
+    for index, rarity in enumerate(rarities):
+        indexes_by_rarity[rarity].append(index)
+
+    probabilities = [Decimal("0") for _ in items]
+    for rarity, indexes in indexes_by_rarity.items():
+        rarity_total = totals[rarity]
+        rarity_items = [items[index] for index in indexes]
+        shares = _value_weighted_shares(rarity_items, cost_points)
+        for index, share in zip(indexes, shares):
+            probabilities[index] = quantize_probability(rarity_total * share)
+
     diff = quantize_probability(Decimal("100") - sum(probabilities))
     if diff:
         probabilities[-1] = quantize_probability(probabilities[-1] + diff)
