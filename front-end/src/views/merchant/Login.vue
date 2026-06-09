@@ -1,7 +1,11 @@
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h2>商家中心登录</h2>
+      <div class="login-tabs">
+        <a class="tab" href="/">用户登录</a>
+        <span class="tab active">商家登录</span>
+        <a class="tab" href="/admin.html">管理员登录</a>
+      </div>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="0" size="large">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="商家账号" prefix-icon="User" />
@@ -21,16 +25,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useMerchantAuthStore } from '@/stores/merchant/auth'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useMerchantAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+
+onMounted(() => {
+  if (route.query.msg === 'admin') {
+    ElMessage.warning('请前往管理后台登录')
+  } else if (route.query.msg === 'user') {
+    ElMessage.warning('请前往用户端登录')
+  }
+})
 
 const form = reactive({ username: '', password: '' })
 const rules = {
@@ -42,8 +55,21 @@ async function handleLogin() {
   await formRef.value?.validate()
   loading.value = true
   try {
-    const res = await authStore.login(form.username, form.password)
+    const res = await authStore.login(form.username, form.password, 'merchant')
     if (res.code === 200) {
+      const role = res.data.merchant?.role ?? res.data.user?.role
+      if (role === 'user') {
+        ElMessage.error('该账号为普通用户，请前往用户端登录')
+        return
+      }
+      if (role === 'admin') {
+        ElMessage.error('该账号为管理员账号，请前往管理后台登录')
+        return
+      }
+      if (role && role !== 'merchant') {
+        ElMessage.error('该账号无权访问商家中心')
+        return
+      }
       ElMessage.success('登录成功')
       router.push('/')
     } else {
@@ -70,7 +96,24 @@ async function handleLogin() {
   width: 400px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
-.login-card h2 { text-align: center; margin-bottom: 30px; color: #303133; font-size: 22px; }
+.login-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+.login-tabs .tab {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #606266;
+  background: #f4f4f5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.login-tabs .tab:hover { color: #409eff; background: #ecf5ff; }
+.login-tabs .tab.active { color: #fff; background: #0d2137; font-weight: 600; }
 .login-tip { text-align: center; margin-top: 12px; color: #909399; font-size: 13px; }
 .login-tip a { color: #409eff; text-decoration: none; }
 </style>

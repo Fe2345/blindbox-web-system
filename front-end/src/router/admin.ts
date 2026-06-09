@@ -40,7 +40,13 @@ router.beforeEach((to, _from, next) => {
     return
   }
   if (localStorage.getItem('admin_logged_in') !== 'true') {
-    next('/login')
+    if (localStorage.getItem('merchant_logged_in') === 'true') {
+      next({ path: '/login', query: { msg: 'merchant' } })
+    } else if (localStorage.getItem('isLoggedIn') === 'true') {
+      next({ path: '/login', query: { msg: 'user' } })
+    } else {
+      next('/login')
+    }
     return
   }
   next()

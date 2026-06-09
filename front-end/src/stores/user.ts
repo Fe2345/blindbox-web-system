@@ -8,13 +8,17 @@ export const useUserStore = defineStore('user', () => {
   const addresses = ref<Address[]>([])
   const isLoggedIn = ref(localStorage.getItem('isLoggedIn') === 'true')
 
-  async function login(username: string, password: string) {
+  async function login(username: string, password: string, expectedRole?: string) {
     const res: any = await userApi.login({ username, password })
     if (res.code === 200) {
+      const role = res.data.user?.role
+      if (expectedRole && role !== expectedRole) {
+        return res
+      }
       userInfo.value = res.data.user
       isLoggedIn.value = true
       localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('user_role', res.data.user.role)
+      localStorage.setItem('user_role', role)
     }
     return res
   }
@@ -25,11 +29,16 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function fetchUserInfo() {
-    const res: any = await userApi.getUserInfo()
-    if (res.code === 200) {
-      userInfo.value = res.data
+    try {
+      const res: any = await userApi.getUserInfo()
+      if (res.code === 200) {
+        userInfo.value = res.data
+      }
+      return res
+    } catch (e) {
+      console.error('[user] fetchUserInfo failed:', e)
+      return { code: -1, message: '获取用户信息失败' }
     }
-    return res
   }
 
   async function updateUserInfo(data: Partial<UserInfo>) {

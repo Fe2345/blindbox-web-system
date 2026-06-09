@@ -206,6 +206,12 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
                     related_asset_name=post_asset.product_name,
                     status_change="exchange_locked -> available",
                 )
+                other_applicant_ids = list(other_apps.values_list("applicant_asset_id", flat=True))
+                other_apps.update(status=ExchangeApplication.Status.REJECTED)
+                if other_applicant_ids:
+                    Asset.objects.filter(pk__in=other_applicant_ids).update(
+                        status=Asset.Status.AVAILABLE
+                    )
         except ExchangeApplication.DoesNotExist:
             return error(message="换物申请不存在", http_status=404)
         except Exception:

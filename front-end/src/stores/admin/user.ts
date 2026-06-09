@@ -12,8 +12,8 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
-  async function updateStatus(id: string, status: string) {
-    const res: any = await api.updateUserStatus(id, status)
+  async function updateStatus(id: string, isActive: boolean) {
+    const res: any = await api.updateUserStatus(id, isActive)
     if (res.code === 200) await fetchList()
     return res
   }

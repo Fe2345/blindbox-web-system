@@ -208,10 +208,10 @@ export const mockMerchants: Merchant[] = [
 ]
 
 export const mockAdminUsers: AdminUser[] = [
-  { id: 'u001', username: '张三', phone: '13800138000', email: 'zhangsan@test.com', status: 'active', points: 930, assetCount: 5, orderCount: 2, createdAt: '2026-04-20' },
-  { id: 'u002', username: '李四', phone: '13800138001', email: 'lisi@test.com', status: 'active', points: 500, assetCount: 3, orderCount: 1, createdAt: '2026-04-22' },
-  { id: 'u003', username: '王五', phone: '13800138002', email: 'wangwu@test.com', status: 'frozen', points: 200, assetCount: 1, orderCount: 0, createdAt: '2026-03-10' },
-  { id: 'u004', username: '赵六', phone: '13800138003', email: 'zhaoliu@test.com', status: 'active', points: 1200, assetCount: 8, orderCount: 4, createdAt: '2026-02-15' },
+  { id: 'u001', username: '张三', phone: '13800138000', role: 'user', isActive: true, avatar: '', dateJoined: '2026-04-20 10:00:00', lastLogin: '2026-06-01 08:30:00' },
+  { id: 'u002', username: '李四', phone: '13800138001', role: 'user', isActive: true, avatar: '', dateJoined: '2026-04-22 14:00:00', lastLogin: '2026-05-28 16:45:00' },
+  { id: 'u003', username: '王五', phone: '13800138002', role: 'user', isActive: false, avatar: '', dateJoined: '2026-03-10 09:00:00', lastLogin: null },
+  { id: 'u004', username: '赵六', phone: '13800138003', role: 'user', isActive: true, avatar: '', dateJoined: '2026-02-15 11:00:00', lastLogin: '2026-06-08 20:10:00' },
 ]
 
 export const mockProducts: Product[] = [

@@ -1,8 +1,7 @@
 <template>
   <div class="page-container">
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center">
+    <div class="page-header">
       <h2>商品模板管理</h2>
-      <el-button type="primary" @click="showAdd">新增商品</el-button>
     </div>
     <div class="filter-bar">
       <el-select v-model="filterStatus" placeholder="状态筛选" clearable style="width: 150px">
@@ -32,7 +31,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑商品' : '新增商品'" width="500px">
+    <el-dialog v-model="dialogVisible" title="编辑商品" width="500px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="商品名称"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="图片地址"><el-input v-model="form.image" placeholder="/media/product/xxx.png" /></el-form-item>
@@ -73,7 +72,6 @@ import { rarityLabel, rarityColor } from '@/utils/format'
 const productStore = useProductStore()
 const filterStatus = ref('')
 const dialogVisible = ref(false)
-const isEdit = ref(false)
 const form = ref({ id: '', name: '', image: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 })
 
 const filteredProducts = computed(() => {
@@ -81,21 +79,15 @@ const filteredProducts = computed(() => {
   return productStore.list.filter((p) => p.status === filterStatus.value)
 })
 
-function showAdd() { isEdit.value = false; form.value = { id: '', name: '', image: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 }; dialogVisible.value = true }
-function showEdit(row: any) { isEdit.value = true; form.value = { ...row }; dialogVisible.value = true }
+function showEdit(row: any) { form.value = { ...row }; dialogVisible.value = true }
 async function handleSave() {
   if (!form.value.name || !form.value.category) {
     ElMessage.warning('请填写商品名称和分类')
     return
   }
-  let res
-  if (isEdit.value) {
-    res = await productStore.update(form.value.id, form.value)
-  } else {
-    res = await productStore.save(form.value)
-  }
+  const res = await productStore.update(form.value.id, form.value)
   if (res.code === 200) {
-    ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
+    ElMessage.success('修改成功')
     dialogVisible.value = false
   }
 }
