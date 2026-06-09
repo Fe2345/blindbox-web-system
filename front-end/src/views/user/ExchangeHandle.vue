@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExchangeStore } from '@/stores/exchange'
 import { useAssetStore } from '@/stores/asset'
@@ -73,12 +73,13 @@ import { Switch } from '@element-plus/icons-vue'
 const router = useRouter()
 const exchangeStore = useExchangeStore()
 const assetStore = useAssetStore()
+const loading = ref(true)
 const applications = computed(() => exchangeStore.applications)
 
 async function handleAccept(id: string) {
   const res = await exchangeStore.acceptApp(id)
   if (res.code === 200) {
-    ElMessage.success('???')
+    ElMessage.success('已接受换物申请')
     await assetStore.fetchAssets()
   } else {
     ElMessage.error(res.message)
@@ -88,7 +89,7 @@ async function handleAccept(id: string) {
 async function handleReject(id: string) {
   const res = await exchangeStore.rejectApp(id)
   if (res.code === 200) {
-    ElMessage.success('???')
+    ElMessage.success('已拒绝换物申请')
     await assetStore.fetchAssets()
   } else {
     ElMessage.error(res.message)

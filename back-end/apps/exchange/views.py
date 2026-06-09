@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
@@ -161,17 +162,20 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
                 publisher = post.user
                 applicant = application.applicant
 
+                now = timezone.now()
                 post_asset.user = applicant
                 post_asset.status = Asset.Status.AVAILABLE
                 post_asset.source_type = Asset.SourceType.EXCHANGE
                 post_asset.source_name = f"换物获得：{applicant_asset.product_name}"
-                post_asset.save(update_fields=["user", "status", "source_type", "source_name", "updated_at"])
+                post_asset.obtained_at = now
+                post_asset.save(update_fields=["user", "status", "source_type", "source_name", "obtained_at", "updated_at"])
 
                 applicant_asset.user = publisher
                 applicant_asset.status = Asset.Status.AVAILABLE
                 applicant_asset.source_type = Asset.SourceType.EXCHANGE
                 applicant_asset.source_name = f"换物获得：{post_asset.product_name}"
-                applicant_asset.save(update_fields=["user", "status", "source_type", "source_name", "updated_at"])
+                applicant_asset.obtained_at = now
+                applicant_asset.save(update_fields=["user", "status", "source_type", "source_name", "obtained_at", "updated_at"])
 
                 application.status = ExchangeApplication.Status.ACCEPTED
                 application.save(update_fields=["status", "updated_at"])
@@ -206,12 +210,6 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
                     related_asset_name=post_asset.product_name,
                     status_change="exchange_locked -> available",
                 )
-                other_applicant_ids = list(other_apps.values_list("applicant_asset_id", flat=True))
-                other_apps.update(status=ExchangeApplication.Status.REJECTED)
-                if other_applicant_ids:
-                    Asset.objects.filter(pk__in=other_applicant_ids).update(
-                        status=Asset.Status.AVAILABLE
-                    )
         except ExchangeApplication.DoesNotExist:
             return error(message="换物申请不存在", http_status=404)
         except Exception:
