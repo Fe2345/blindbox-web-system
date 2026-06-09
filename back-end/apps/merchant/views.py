@@ -3,6 +3,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -43,22 +44,31 @@ class MerchantRegisterView(CSRFExemptView):
     def post(self, request):
         ser = MerchantRegisterSerializer(data=request.data)
         if not ser.is_valid():
-            return error(ser.errors, status.HTTP_400_BAD_REQUEST)
+            return error(flatten_errors(ser.errors), status.HTTP_400_BAD_REQUEST)
 
         data = ser.validated_data
-        user = User.objects.create_user(
-            username=data["username"],
-            password=data["password"],
-            phone=data.get("phone", ""),
-        )
-        user.role = User.Role.MERCHANT
-        user.save(update_fields=["role"])
+        phone = data.get("phone", "")
+        merchant_name = data.get("merchant_name") or f"{data['username']} 的店铺"
+        contact_name = data.get("contact_name") or data["username"]
 
-        Merchant.objects.create(
-            user=user,
-            phone=data.get("phone", ""),
-            status=Merchant.Status.PENDING,
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=data["username"],
+                password=data["password"],
+                phone=phone,
+            )
+            user.role = User.Role.MERCHANT
+            user.save(update_fields=["role"])
+
+            Merchant.objects.create(
+                user=user,
+                name=merchant_name,
+                contact_name=contact_name,
+                phone=phone,
+                business_scope="",
+                supply_desc="",
+                status=Merchant.Status.PENDING,
+            )
         return success(None, "注册成功")
 
 

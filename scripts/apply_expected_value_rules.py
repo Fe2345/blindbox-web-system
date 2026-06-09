@@ -28,11 +28,13 @@ def main():
     product_values = {}
     for box in BlindBox.objects.prefetch_related("prizes__product").order_by("id"):
         prizes = list(box.prizes.all())
-        single_rarity_pool = len({prize.rarity for prize in prizes}) == 1
         for prize in prizes:
             if prize.product_id:
-                product_values[prize.product_id] = (
-                    box.cost_points if single_rarity_pool else estimate_points_for_rarity(prize.rarity, box.cost_points)
+                product_values.setdefault(
+                    prize.product_id,
+                    prize.product.estimated_points
+                    if prize.product and prize.product.estimated_points > 0
+                    else estimate_points_for_rarity(prize.rarity, box.cost_points),
                 )
 
     product_updated = 0

@@ -71,7 +71,7 @@
         <el-select v-model="applyForm.assetId" placeholder="选择要交换的资产" style="width: 100%">
           <el-option v-for="a in myAvailableAssets" :key="a.id" :label="a.productName" :value="a.id">
             <span>{{ a.productName }}</span>
-            <el-tag size="small" style="margin-left: 8px">{{ rarityLabel(a.rarity) }}</el-tag>
+            <el-tag size="small" effect="plain" :style="{ color: rarityColor(a.rarity), borderColor: rarityColor(a.rarity), marginLeft: '8px' }">{{ rarityLabel(a.rarity) }}</el-tag>
           </el-option>
         </el-select>
 
@@ -117,6 +117,8 @@ const categories = computed(() => [...new Set(exchangeStore.posts.map((p) => p.a
 
 const filteredPosts = computed(() => {
   return exchangeStore.posts.filter((p) => {
+    // 只显示展示中和已锁定的帖子，隐藏已完成和已取消的
+    if (p.status !== 'published' && p.status !== 'locked') return false
     if (filterCategory.value && p.assetCategory !== filterCategory.value) return false
     if (filterRarity.value && p.assetRarity !== filterRarity.value) return false
     if (searchKey.value && !p.assetName.includes(searchKey.value) && !p.expectDescription.includes(searchKey.value)) return false

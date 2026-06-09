@@ -25,6 +25,7 @@ from apps.exchange.models import ExchangeApplication, ExchangePost
 from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product, ShipmentTask
 from apps.orders.models import Order
 from apps.points.models import PointsAccount, PointsRecord, TransactionRecord
+from apps.operations.models import ExceptionRecord, OpLog, RuleConfig, TransactionLedger
 
 
 DEMO_PREFIX = "DEMO20260609"
@@ -190,7 +191,12 @@ def ensure_products_have_merchants(merchants):
 
 
 def purge_old_demo_rows():
+    Order.objects.filter(order_no__startswith="P3_DEMO").delete()
     ShipmentTask.objects.filter(task_no__startswith="P3_DEMO").delete()
+    ShipmentTask.objects.filter(order_no__startswith="P3_DEMO").delete()
+    PointsRecord.objects.filter(related_id__startswith="P3_DEMO").delete()
+    ExceptionRecord.objects.filter(related_id__startswith="P3_DEMO").delete()
+    OpLog.objects.filter(target__contains="P3_DEMO").delete()
     Order.objects.filter(order_no__startswith=DEMO_PREFIX).delete()
     ShipmentTask.objects.filter(task_no__startswith=DEMO_PREFIX).delete()
     TransactionRecord.objects.filter(description__startswith="演示").delete()
@@ -388,6 +394,11 @@ def clean_visible_content():
         "exchange_application": clean_model_text(ExchangeApplication, ["applicant_asset_name", "post_asset_name", "remark"]),
         "points_record": clean_model_text(PointsRecord, ["description", "related_id"]),
         "transaction_record": clean_model_text(TransactionRecord, ["description", "related_asset_name", "status_change"]),
+        "address": clean_model_text(Address, ["receiver_name", "street", "detail"]),
+        "rule_config": clean_model_text(RuleConfig, ["updated_by"]),
+        "operation_log": clean_model_text(OpLog, ["operator", "action", "target", "detail"]),
+        "exception_record": clean_model_text(ExceptionRecord, ["description", "related_id", "result"]),
+        "transaction_ledger": clean_model_text(TransactionLedger, ["description"]),
     }
 
 
@@ -411,6 +422,11 @@ def main():
         (Order, ["asset_name", "receiver_address"]),
         (ShipmentTask, ["receiver_address"]),
         (ExchangePost, ["asset_name", "expect_description", "remark"]),
+        (Address, ["receiver_name", "street", "detail"]),
+        (RuleConfig, ["updated_by"]),
+        (OpLog, ["operator", "target", "detail"]),
+        (ExceptionRecord, ["description", "related_id", "result"]),
+        (TransactionLedger, ["description"]),
     ]:
         count = 0
         for field in fields:

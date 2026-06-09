@@ -4,7 +4,13 @@ export function merchantLogin(data: { username: string; password: string }) {
   return request.post('/login', data)
 }
 
-export function merchantRegister(data: { username: string; password: string; phone: string }) {
+export function merchantRegister(data: {
+  username: string
+  password: string
+  phone: string
+  merchantName?: string
+  contactName?: string
+}) {
   return request.post('/register', data)
 }
 
