@@ -3,9 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/login',
-    name: 'AuthPortal',
-    component: () => import('@/views/AuthPortal.vue'),
-    meta: { noAuth: true },
+    redirect: '/user/login',
   },
   {
     path: '/user/login',
@@ -48,13 +46,19 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   if (!to.meta.noAuth && !isLoggedIn) {
-    next('/login')
+    if (localStorage.getItem('admin_logged_in') === 'true') {
+      next({ path: '/user/login', query: { msg: 'admin' } })
+    } else if (localStorage.getItem('merchant_logged_in') === 'true') {
+      next({ path: '/user/login', query: { msg: 'merchant' } })
+    } else {
+      next('/user/login')
+    }
     return
   }
   if (!to.meta.noAuth && localStorage.getItem('user_role') !== 'user') {
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('user_role')
-    next('/login')
+    next('/user/login')
     return
   }
   next()

@@ -36,10 +36,9 @@ export interface AdminUser {
   id: string
   username: string
   phone: string
-  email: string
-  status: 'active' | 'frozen'
-  points: number
-  assetCount: number
-  orderCount: number
-  createdAt: string
+  role: string
+  isActive: boolean
+  avatar: string
+  dateJoined: string
+  lastLogin: string | null
 }
