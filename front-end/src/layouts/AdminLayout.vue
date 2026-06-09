@@ -136,8 +136,8 @@ const menuTitleMap: Record<string, string> = {
 const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => menuTitleMap[route.path] || '')
 
-function handleLogout() {
-  authStore.logout()
+async function handleLogout() {
+  await authStore.logout()
   window.location.href = '/login'
 }
 </script>
