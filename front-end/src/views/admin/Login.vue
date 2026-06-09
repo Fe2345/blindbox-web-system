@@ -1,7 +1,11 @@
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h2>管理后台登录</h2>
+      <div class="login-tabs">
+        <a class="tab" href="/">用户登录</a>
+        <a class="tab" href="/merchant.html">商家登录</a>
+        <span class="tab active">管理员登录</span>
+      </div>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="0" size="large">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="管理员账号" prefix-icon="User" />
@@ -89,5 +93,22 @@ async function handleLogin() {
   width: 400px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
-.login-card h2 { text-align: center; margin-bottom: 30px; color: #303133; font-size: 22px; }
+.login-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+.login-tabs .tab {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #606266;
+  background: #f4f4f5;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.login-tabs .tab:hover { color: #409eff; background: #ecf5ff; }
+.login-tabs .tab.active { color: #fff; background: #001529; font-weight: 600; }
 </style>
