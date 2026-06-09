@@ -2,7 +2,8 @@
   <div class="page-container">
     <el-page-header @back="router.back()" title="返回" content="换物申请处理" />
 
-    <div v-if="applications.length" style="margin-top: 20px">
+    <div v-if="loading" v-loading="true" style="min-height: 200px; margin-top: 20px"></div>
+    <div v-else-if="applications.length" style="margin-top: 20px">
       <el-card v-for="app in applications" :key="app.id" style="margin-bottom: 16px">
         <div class="app-card">
           <div class="asset-side">
@@ -61,30 +62,49 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExchangeStore } from '@/stores/exchange'
+import { useAssetStore } from '@/stores/asset'
 import { ElMessage } from 'element-plus'
 import { rarityLabel, rarityColor } from '@/utils/format'
 import { Switch } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const exchangeStore = useExchangeStore()
-const applications = exchangeStore.applications
+const assetStore = useAssetStore()
+const applications = computed(() => exchangeStore.applications)
 
 async function handleAccept(id: string) {
   const res = await exchangeStore.acceptApp(id)
-  if (res.code === 200) ElMessage.success('已接受')
-  else ElMessage.error(res.message)
+  if (res.code === 200) {
+    ElMessage.success('???')
+    await assetStore.fetchAssets()
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 
 async function handleReject(id: string) {
   const res = await exchangeStore.rejectApp(id)
-  if (res.code === 200) ElMessage.success('已拒绝')
-  else ElMessage.error(res.message)
+  if (res.code === 200) {
+    ElMessage.success('???')
+    await assetStore.fetchAssets()
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 
-onMounted(() => exchangeStore.fetchApplications())
+onMounted(async () => {
+  try {
+    const res = await exchangeStore.fetchApplications()
+    if (res.code !== 200) {
+      ElMessage.error(res.message || '获取换物申请失败')
+    }
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

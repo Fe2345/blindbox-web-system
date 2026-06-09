@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import IsAuthenticated
 from apps.common.response import error, success
+from apps.common.valuation import recycle_points_for_value
 
 from .models import Asset
 from .serializers import AssetSerializer
@@ -104,16 +105,39 @@ class AssetPublishExchangeView(CSRFExemptView):
 
     def post(self, request, pk):
         try:
-            asset = Asset.objects.get(pk=pk, user=request.user)
+            with transaction.atomic():
+                asset = Asset.objects.select_for_update().get(pk=pk, user=request.user)
+                if asset.status != Asset.Status.AVAILABLE:
+                    return error(message="????????", http_status=400)
+
+                from apps.exchange.models import ExchangePost
+                from apps.exchange.serializers import ExchangePostSerializer
+
+                active_post_exists = ExchangePost.objects.filter(
+                    asset=asset,
+                    status__in=[ExchangePost.Status.PUBLISHED, ExchangePost.Status.LOCKED],
+                ).exists()
+                if active_post_exists:
+                    return error(message="??????????", http_status=400)
+
+                asset.status = Asset.Status.EXCHANGE_PUBLISHED
+                asset.save(update_fields=["status", "updated_at"])
+
+                post = ExchangePost.objects.create(
+                    user=request.user,
+                    asset=asset,
+                    asset_name=asset.product_name,
+                    asset_image=asset.product_image,
+                    asset_rarity=asset.rarity,
+                    asset_category=asset.category,
+                    expect_description=request.data.get("expectDescription") or request.data.get("expect_description") or "",
+                    remark=request.data.get("remark", ""),
+                    status=ExchangePost.Status.PUBLISHED,
+                )
         except Asset.DoesNotExist:
-            return error(message="资产不存在", http_status=404)
+            return error(message="?????", http_status=404)
 
-        if asset.status != Asset.Status.AVAILABLE:
-            return error(message="当前状态不可换物", http_status=400)
-
-        asset.status = Asset.Status.EXCHANGE_PUBLISHED
-        asset.save(update_fields=["status"])
-        return success(message="发布成功")
+        return success(data=ExchangePostSerializer(post).data, message="????")
 
 
 def keep_one_per_product(assets):
@@ -210,4 +234,4 @@ def resolve_recycle_points(asset):
     if estimated_points <= 0 and asset.product_id:
         estimated_points = asset.product.estimated_points
 
-    return max(estimated_points // 2, 1) if estimated_points > 0 else 0
+    return recycle_points_for_value(estimated_points, asset.rarity) if estimated_points > 0 else 0

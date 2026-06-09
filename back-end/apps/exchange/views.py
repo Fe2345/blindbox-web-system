@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from apps.assets.models import Asset
 from apps.common.permissions import IsAuthenticated
 from apps.common.response import error, success
+from apps.points.models import TransactionRecord
 
 from .models import ExchangeApplication, ExchangePost
 from .serializers import ExchangeApplicationSerializer, ExchangePostSerializer
@@ -66,19 +67,21 @@ class ExchangeApplyView(CSRFExemptView):
                     return error(message="不能申请交换自己的帖子", http_status=400)
                 if post.status != ExchangePost.Status.PUBLISHED:
                     return error(message="当前换物帖不可申请", http_status=400)
-                if post.asset.status != Asset.Status.EXCHANGE_PUBLISHED:
-                    return error(message="发布方资产状态不可交换", http_status=400)
+                if post.asset.user_id != post.user_id or post.asset.status != Asset.Status.EXCHANGE_PUBLISHED:
+                    return error(message="发布方资产状态不一致，暂不可交换", http_status=400)
                 if applicant_asset.status != Asset.Status.AVAILABLE:
                     return error(message="申请方资产状态不可交换", http_status=400)
+                if ExchangeApplication.objects.filter(post=post, applicant=request.user, status=ExchangeApplication.Status.PENDING).exists():
+                    return error(message="你已经提交过待处理申请", http_status=400)
 
                 applicant_asset.status = Asset.Status.EXCHANGE_LOCKED
-                applicant_asset.save(update_fields=["status"])
+                applicant_asset.save(update_fields=["status", "updated_at"])
 
                 post.asset.status = Asset.Status.EXCHANGE_LOCKED
-                post.asset.save(update_fields=["status"])
+                post.asset.save(update_fields=["status", "updated_at"])
 
                 post.status = ExchangePost.Status.LOCKED
-                post.save(update_fields=["status"])
+                post.save(update_fields=["status", "updated_at"])
 
                 application = ExchangeApplication.objects.create(
                     post=post,
@@ -139,7 +142,7 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
                 application = (
                     ExchangeApplication.objects
                     .select_for_update()
-                    .select_related("post", "post__asset", "applicant_asset")
+                    .select_related("post", "post__asset", "post__user", "applicant", "applicant_asset")
                     .get(pk=pk, post__user=request.user)
                 )
                 post = application.post
@@ -148,31 +151,67 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
 
                 if application.status != ExchangeApplication.Status.PENDING:
                     return error(message="当前申请已处理", http_status=400)
-                if post.status not in [ExchangePost.Status.PUBLISHED, ExchangePost.Status.LOCKED]:
+                if post.status != ExchangePost.Status.LOCKED:
                     return error(message="当前换物帖不可处理", http_status=400)
+                if post_asset.user_id != post.user_id or post_asset.status != Asset.Status.EXCHANGE_LOCKED:
+                    return error(message="发布方资产状态不一致，无法完成交换", http_status=400)
+                if applicant_asset.user_id != application.applicant_id or applicant_asset.status != Asset.Status.EXCHANGE_LOCKED:
+                    return error(message="申请方资产状态不一致，无法完成交换", http_status=400)
 
                 publisher = post.user
                 applicant = application.applicant
+
                 post_asset.user = applicant
                 post_asset.status = Asset.Status.AVAILABLE
-                post_asset.save(update_fields=["user", "status"])
+                post_asset.source_type = Asset.SourceType.EXCHANGE
+                post_asset.source_name = f"换物获得：{applicant_asset.product_name}"
+                post_asset.save(update_fields=["user", "status", "source_type", "source_name", "updated_at"])
 
                 applicant_asset.user = publisher
                 applicant_asset.status = Asset.Status.AVAILABLE
-                applicant_asset.save(update_fields=["user", "status"])
+                applicant_asset.source_type = Asset.SourceType.EXCHANGE
+                applicant_asset.source_name = f"换物获得：{post_asset.product_name}"
+                applicant_asset.save(update_fields=["user", "status", "source_type", "source_name", "updated_at"])
 
                 application.status = ExchangeApplication.Status.ACCEPTED
-                application.save(update_fields=["status"])
+                application.save(update_fields=["status", "updated_at"])
 
                 post.status = ExchangePost.Status.COMPLETED
-                post.save(update_fields=["status"])
+                post.save(update_fields=["status", "updated_at"])
 
-                (
+                other_pending = (
                     ExchangeApplication.objects
+                    .select_related("applicant_asset")
                     .filter(post=post, status=ExchangeApplication.Status.PENDING)
                     .exclude(pk=application.pk)
-                    .update(status=ExchangeApplication.Status.REJECTED)
                 )
+                for other in other_pending:
+                    if other.applicant_asset.status == Asset.Status.EXCHANGE_LOCKED:
+                        other.applicant_asset.status = Asset.Status.AVAILABLE
+                        other.applicant_asset.save(update_fields=["status", "updated_at"])
+                    other.status = ExchangeApplication.Status.REJECTED
+                    other.save(update_fields=["status", "updated_at"])
+
+                TransactionRecord.objects.create(
+                    user=publisher,
+                    type=TransactionRecord.RecordType.EXCHANGE,
+                    description=f"换出{post_asset.product_name}，获得{applicant_asset.product_name}",
+                    related_asset_name=applicant_asset.product_name,
+                    status_change="exchange_locked -> available",
+                )
+                TransactionRecord.objects.create(
+                    user=applicant,
+                    type=TransactionRecord.RecordType.EXCHANGE,
+                    description=f"换出{applicant_asset.product_name}，获得{post_asset.product_name}",
+                    related_asset_name=post_asset.product_name,
+                    status_change="exchange_locked -> available",
+                )
+                other_applicant_ids = list(other_apps.values_list("applicant_asset_id", flat=True))
+                other_apps.update(status=ExchangeApplication.Status.REJECTED)
+                if other_applicant_ids:
+                    Asset.objects.filter(pk__in=other_applicant_ids).update(
+                        status=Asset.Status.AVAILABLE
+                    )
         except ExchangeApplication.DoesNotExist:
             return error(message="换物申请不存在", http_status=404)
         except Exception:
@@ -198,19 +237,25 @@ class ExchangeApplicationRejectView(CSRFExemptView):
                     return error(message="当前申请已处理", http_status=400)
 
                 applicant_asset = Asset.objects.select_for_update().get(pk=application.applicant_asset_id)
-                applicant_asset.status = Asset.Status.AVAILABLE
-                applicant_asset.save(update_fields=["status"])
-
-                post = application.post
-                post_asset = Asset.objects.select_for_update().get(pk=post.asset_id)
-                post_asset.status = Asset.Status.EXCHANGE_PUBLISHED
-                post_asset.save(update_fields=["status"])
-
-                post.status = ExchangePost.Status.PUBLISHED
-                post.save(update_fields=["status"])
+                if applicant_asset.status == Asset.Status.EXCHANGE_LOCKED:
+                    applicant_asset.status = Asset.Status.AVAILABLE
+                    applicant_asset.save(update_fields=["status", "updated_at"])
 
                 application.status = ExchangeApplication.Status.REJECTED
-                application.save(update_fields=["status"])
+                application.save(update_fields=["status", "updated_at"])
+
+                post = application.post
+                has_other_pending = ExchangeApplication.objects.filter(
+                    post=post,
+                    status=ExchangeApplication.Status.PENDING,
+                ).exclude(pk=application.pk).exists()
+                if not has_other_pending and post.status == ExchangePost.Status.LOCKED:
+                    post_asset = Asset.objects.select_for_update().get(pk=post.asset_id)
+                    if post_asset.status == Asset.Status.EXCHANGE_LOCKED:
+                        post_asset.status = Asset.Status.EXCHANGE_PUBLISHED
+                        post_asset.save(update_fields=["status", "updated_at"])
+                    post.status = ExchangePost.Status.PUBLISHED
+                    post.save(update_fields=["status", "updated_at"])
         except ExchangeApplication.DoesNotExist:
             return error(message="换物申请不存在", http_status=404)
         except Exception:

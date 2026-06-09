@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -12,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.common.permissions import IsAdmin, IsMerchant
 from apps.common.response import success, error, flatten_errors
+from apps.common.valuation import estimate_points_for_rarity
 from apps.accounts.models import User
 from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product, ShipmentTask
 from apps.merchant.serializers import (
@@ -21,15 +24,17 @@ from apps.merchant.serializers import (
     ShipmentTaskSerializer, ShipmentConfirmSerializer,
     AdminMerchantSerializer, AdminMerchantReviewSerializer,
     AdminMerchantStatusSerializer, AdminProductSerializer,
-    AdminProductReviewSerializer,
+    AdminProductReviewSerializer, AdminProductWriteSerializer,
+    AdminProductUpdateSerializer,
 )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class CSRFExemptView(APIView):
     pass
 
 
-class MerchantRegisterView(APIView):
+class MerchantRegisterView(CSRFExemptView):
     """商家注册 — POST /merchant/api/register"""
 
     authentication_classes = []
@@ -57,7 +62,7 @@ class MerchantRegisterView(APIView):
         return success(None, "注册成功")
 
 
-class MerchantLoginView(APIView):
+class MerchantLoginView(CSRFExemptView):
     """商家登录 — POST /merchant/api/login"""
 
     authentication_classes = []
@@ -556,7 +561,7 @@ class AdminMerchantStatusView(CSRFExemptView):
 
 
 class AdminProductListView(CSRFExemptView):
-    """商品列表（管理端）"""
+    """商品列表 / 新增（管理端）"""
 
     permission_classes = [IsAdmin]
 
@@ -566,6 +571,24 @@ class AdminProductListView(CSRFExemptView):
         if status:
             qs = qs.filter(status=status)
         return success(data=AdminProductSerializer(qs[:100], many=True).data)
+
+    def post(self, request):
+        serializer = AdminProductWriteSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        d = serializer.validated_data
+        product = Product.objects.create(
+            name=d["name"],
+            image=d.get("image", ""),
+            category=d["category"],
+            rarity=d["rarity"],
+            description=d.get("description", ""),
+            estimated_points=d.get("estimated_points", 0) or estimate_points_for_rarity(d["rarity"], 100),
+            status="approved",
+        )
+        Inventory.objects.create(product=product, current_stock=d.get("stock", 0))
+        return success(data=AdminProductSerializer(product).data)
 
 
 class AdminProductReviewView(CSRFExemptView):
@@ -590,4 +613,60 @@ class AdminProductReviewView(CSRFExemptView):
             product.status = "rejected"
         product.review_note = d.get("note", "")
         product.save(update_fields=["status", "review_note"])
+        return success(data=AdminProductSerializer(product).data)
+
+
+class AdminProductDetailView(CSRFExemptView):
+    """商品详情 / 编辑（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request, pk):
+        try:
+            product = Product.objects.select_related("merchant").get(pk=pk)
+        except Product.DoesNotExist:
+            return error(message="商品不存在", http_status=404)
+        return success(data=AdminProductSerializer(product).data)
+
+    def put(self, request, pk):
+        try:
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return error(message="商品不存在", http_status=404)
+
+        serializer = AdminProductUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return error(message=flatten_errors(serializer.errors), http_status=400)
+
+        d = serializer.validated_data
+        product_fields = ["name", "image", "category", "rarity", "description", "estimated_points"]
+        update_fields = []
+        for field in product_fields:
+            if field in d:
+                setattr(product, field, d[field])
+                update_fields.append(field)
+        if update_fields:
+            product.save(update_fields=update_fields)
+
+        if "stock" in d:
+            inventory, _ = Inventory.objects.get_or_create(product=product)
+            inventory.current_stock = d["stock"]
+            inventory.save(update_fields=["current_stock"])
+
+        return success(data=AdminProductSerializer(product).data)
+
+
+class AdminProductOfflineView(CSRFExemptView):
+    """商品下架（管理端）"""
+
+    permission_classes = [IsAdmin]
+
+    def post(self, request, pk):
+        try:
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return error(message="商品不存在", http_status=404)
+
+        product.status = "offline"
+        product.save(update_fields=["status"])
         return success(data=AdminProductSerializer(product).data)

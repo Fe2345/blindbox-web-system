@@ -32,5 +32,14 @@ export const usePointsStore = defineStore('points', () => {
     return res
   }
 
-  return { records, transactions, balance, fetchRecords, fetchBalance, fetchTransactions }
+  async function recharge(amountYuan: number) {
+    const res: any = await pointsApi.rechargePoints(amountYuan)
+    if (res.code === 200) {
+      balance.value = res.data.balance
+      await fetchRecords()
+    }
+    return res
+  }
+
+  return { records, transactions, balance, fetchRecords, fetchBalance, fetchTransactions, recharge }
 })

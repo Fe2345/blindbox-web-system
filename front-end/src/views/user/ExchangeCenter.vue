@@ -18,7 +18,8 @@
       <el-input v-model="searchKey" placeholder="搜索商品名称或期望说明" prefix-icon="Search" style="width: 280px" clearable />
     </div>
 
-    <div v-if="filteredPosts.length" class="card-grid">
+    <div v-if="loading" v-loading="true" style="min-height: 200px"></div>
+    <div v-else-if="filteredPosts.length" class="card-grid">
       <div v-for="post in filteredPosts" :key="post.id" class="item-card">
         <img :src="post.assetImage" :alt="post.assetName" class="card-image" />
         <div class="card-body">
@@ -37,7 +38,13 @@
           <el-tag :type="post.status === 'published' ? 'success' : 'info'" size="small">
             {{ post.status === 'published' ? '展示中' : post.status === 'locked' ? '已锁定' : '已完成' }}
           </el-tag>
-          <el-button v-if="post.status === 'published'" size="small" type="primary" @click="showApplyDialog(post)">申请换物</el-button>
+          <el-tag v-if="post.pendingCount > 0" type="warning" size="small">{{ post.pendingCount }}条申请</el-tag>
+          <template v-if="isMyPost(post)">
+            <el-button v-if="post.pendingCount > 0" size="small" type="success" @click="router.push('/exchange/handle')">处理申请</el-button>
+          </template>
+          <template v-else>
+            <el-button v-if="post.status === 'published'" size="small" type="primary" @click="showApplyDialog(post)">申请换物</el-button>
+          </template>
         </div>
       </div>
     </div>
@@ -83,6 +90,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExchangeStore } from '@/stores/exchange'
 import { useAssetStore } from '@/stores/asset'
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { formatDate, rarityLabel, rarityColor } from '@/utils/format'
 import type { ExchangePost } from '@/types/exchange'
@@ -90,10 +98,16 @@ import type { ExchangePost } from '@/types/exchange'
 const router = useRouter()
 const exchangeStore = useExchangeStore()
 const assetStore = useAssetStore()
+const userStore = useUserStore()
+
+function isMyPost(post: ExchangePost) {
+  return String(post.userId) === String(userStore.userInfo?.id)
+}
 
 const filterCategory = ref('')
 const filterRarity = ref('')
 const searchKey = ref('')
+const loading = ref(true)
 const applyDialogVisible = ref(false)
 const applying = ref(false)
 const currentPost = ref<ExchangePost | null>(null)
@@ -139,8 +153,22 @@ async function handleApply() {
 }
 
 onMounted(async () => {
-  await exchangeStore.fetchPosts()
-  await assetStore.fetchAssets()
+  try {
+    const results = await Promise.allSettled([
+      exchangeStore.fetchPosts(),
+      assetStore.fetchAssets(),
+      userStore.fetchUserInfo(),
+    ])
+    // 如果换物帖子加载失败，显示错误
+    const postsResult = results[0]
+    if (postsResult.status === 'fulfilled' && postsResult.value?.code !== 200) {
+      ElMessage.error(postsResult.value?.message || '获取换物信息失败')
+    } else if (postsResult.status === 'rejected') {
+      ElMessage.error('获取换物信息失败')
+    }
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
