@@ -13,6 +13,7 @@ urlpatterns = [
     path("user/api/", include("apps.points.urls")),
     # 商家端
     path("merchant/api/", include("apps.merchant.urls_merchant")),
+    path("merchant/api/", include("apps.blindbox.urls_merchant")),
     # 管理端（必须在 admin/ 之前，否则会被 Django admin 拦截）
     path("admin/api/", include("apps.accounts.urls_admin")),
     path("admin/api/", include("apps.blindbox.urls_admin")),

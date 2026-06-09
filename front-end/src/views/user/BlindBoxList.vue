@@ -20,7 +20,10 @@
           <div class="card-title">{{ box.name }}</div>
           <div class="card-meta">分类：{{ box.category }}</div>
           <div class="card-meta">消耗积分：{{ box.costPoints }}</div>
-          <div class="card-meta">剩余库存：{{ box.prizes.reduce((s, p) => s + p.remainingQuantity, 0) }}</div>
+          <div class="card-meta">
+            <el-tag v-if="isOutOfStock(box)" type="danger" size="small">待补货</el-tag>
+            <el-tag v-else type="success" size="small">可抽取</el-tag>
+          </div>
         </div>
         <div class="card-actions">
           <el-tag :type="box.status === 'active' ? 'success' : box.status === 'inactive' ? 'warning' : 'info'" size="small">
@@ -44,6 +47,10 @@ const blindBoxStore = useBlindBoxStore()
 
 const filterStatus = ref('')
 const searchKey = ref('')
+
+function isOutOfStock(box: any) {
+  return box.prizes.every((p: any) => p.availableForShipping <= 0)
+}
 
 const filteredBoxes = computed(() => {
   return blindBoxStore.blindBoxes.filter((b) => {

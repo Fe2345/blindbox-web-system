@@ -57,7 +57,7 @@
         </el-table-column>
         <el-table-column label="剩余库存" width="130">
           <template #default="{ row }">
-            <el-input-number v-model="row.remainingQuantity" :min="0" size="small" style="width: 100px" />
+            <el-input-number :model-value="row.remainingQuantity" disabled size="small" style="width: 100px" />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="90">
