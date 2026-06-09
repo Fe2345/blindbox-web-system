@@ -73,12 +73,13 @@ async function handleSave() {
     ElMessage.warning('请填写盲盒名称和分类')
     return
   }
+  const dateRange = form.value.dateRange as any[] | null
+  const { dateRange: _dateRange, ...basePayload } = form.value
   const payload = {
-    ...form.value,
-    startTime: form.value.dateRange?.[0] || null,
-    endTime: form.value.dateRange?.[1] || null,
+    ...basePayload,
+    startTime: dateRange?.[0] || null,
+    endTime: dateRange?.[1] || null,
   }
-  delete payload.dateRange
   let res
   if (isEdit.value) {
     res = await blindBoxStore.update(form.value.id, payload)
