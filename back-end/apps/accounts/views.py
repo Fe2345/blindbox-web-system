@@ -188,6 +188,9 @@ class LoginView(APIView):
         refresh["role"] = user.role
         access = str(refresh.access_token)
 
+        from apps.points.models import PointsAccount
+        points_account = PointsAccount.objects.filter(user=user).first()
+
         response = success(data={
             "token": access,
             "user": {
@@ -196,6 +199,7 @@ class LoginView(APIView):
                 "phone": user.phone,
                 "avatar": user.avatar,
                 "role": user.role,
+                "points": points_account.balance if points_account else 0,
                 "status": "active" if user.is_active else "frozen",
                 "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
             },
@@ -307,11 +311,14 @@ class UserInfoView(APIView):
 
     @staticmethod
     def _user_data(user):
+        from apps.points.models import PointsAccount
+        points_account = PointsAccount.objects.filter(user=user).first()
         return {
             "id": user.id,
             "username": user.username,
             "phone": user.phone,
             "avatar": user.avatar,
+            "points": points_account.balance if points_account else 0,
             "status": "active" if user.is_active else "frozen",
             "createdAt": user.date_joined.strftime("%Y-%m-%d %H:%M:%S"),
         }

@@ -7,9 +7,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 
+from apps.accounts.models import Address
 from apps.common.permissions import IsAuthenticated
 from apps.common.response import error, success
 from apps.common.valuation import recycle_points_for_value
+from apps.merchant.models import ShipmentTask
+from apps.orders.models import Order
 
 from .models import Asset
 from .serializers import AssetSerializer
@@ -95,8 +98,48 @@ class AssetShipView(CSRFExemptView):
         if asset.status != Asset.Status.AVAILABLE:
             return error(message="当前状态不可发货", http_status=400)
 
-        asset.status = Asset.Status.PENDING_SHIPMENT
-        asset.save(update_fields=["status"])
+        # 获取用户收货地址（优先默认地址，否则取最新一条）
+        address = Address.objects.filter(user=request.user, is_default=True).first()
+        if not address:
+            address = Address.objects.filter(user=request.user).order_by("-updated_at").first()
+        if not address:
+            return error(message="请先在个人中心添加收货地址", http_status=400)
+
+        full_address = f"{address.province.name}{address.city.name}{address.district.name}{address.street}{address.detail}"
+
+        with transaction.atomic():
+            order_no = f"ORD{uuid.uuid4().hex[:12].upper()}"
+            asset_name = asset.product_name
+            asset_image = asset.product_image
+
+            # 创建发货订单
+            order = Order.objects.create(
+                user=request.user,
+                order_no=order_no,
+                type=Order.OrderType.SHIPMENT,
+                asset=asset,
+                asset_name=asset_name,
+                asset_image=asset_image,
+                receiver_name=address.receiver_name,
+                receiver_phone=address.receiver_phone,
+                receiver_address=full_address,
+            )
+
+            # 创建商家发货任务（关联商品）
+            if asset.product:
+                ShipmentTask.objects.create(
+                    product=asset.product,
+                    task_no=f"SHIP{uuid.uuid4().hex[:12].upper()}",
+                    order_no=order_no,
+                    receiver_name=address.receiver_name,
+                    receiver_phone=address.receiver_phone,
+                    receiver_address=full_address,
+                )
+
+            # 更新资产状态
+            asset.status = Asset.Status.PENDING_SHIPMENT
+            asset.save(update_fields=["status"])
+
         return success(message="发货申请已提交")
 
 

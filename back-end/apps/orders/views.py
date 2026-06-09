@@ -95,15 +95,35 @@ class AdminOrderShipView(CSRFExemptView):
         if not serializer.is_valid():
             return error(message=flatten_errors(serializer.errors), http_status=400)
 
+        company = serializer.validated_data["company"]
+        tracking_no = serializer.validated_data["trackingNo"]
+
         with transaction.atomic():
             try:
                 order = Order.objects.select_for_update().get(pk=pk, status=Order.Status.PENDING)
             except Order.DoesNotExist:
                 return error(message="订单不存在或不在待处理状态", http_status=404)
 
-            order.logistics_company = serializer.validated_data["logistics_company"]
-            order.tracking_no = serializer.validated_data["tracking_no"]
+            order.logistics_company = company
+            order.tracking_no = tracking_no
             order.shipped_at = timezone.now()
             order.status = Order.Status.SHIPPED
             order.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
+
+            # 同步更新资产状态
+            if order.asset:
+                order.asset.status = Asset.Status.SHIPPED
+                order.asset.save(update_fields=["status"])
+
+            # 同步更新商家发货任务状态
+            from apps.merchant.models import ShipmentTask
+            ShipmentTask.objects.filter(
+                order_no=order.order_no, status=ShipmentTask.Status.PENDING
+            ).update(
+                logistics_company=company,
+                tracking_no=tracking_no,
+                shipped_at=timezone.now(),
+                status=ShipmentTask.Status.SHIPPED,
+            )
+
         return success(data=AdminOrderSerializer(order).data)

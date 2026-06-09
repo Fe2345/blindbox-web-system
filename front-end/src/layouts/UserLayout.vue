@@ -19,6 +19,10 @@
         <div class="header-right">
           <el-dropdown v-if="userStore.isLoggedIn" trigger="click">
             <span class="user-info">
+              <span class="points-display" @click.stop="router.push('/points')">
+                <el-icon><Coin /></el-icon>
+                {{ userStore.userInfo?.points || 0 }}
+              </span>
               <el-icon><User /></el-icon>
               {{ userStore.userInfo?.username || '用户' }}
               <el-icon><ArrowDown /></el-icon>
@@ -43,14 +47,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { User, ArrowDown } from '@element-plus/icons-vue'
+import { User, ArrowDown, Coin } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+onMounted(async () => {
+  if (userStore.isLoggedIn && !userStore.userInfo) {
+    await userStore.fetchUserInfo()
+  }
+})
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -122,6 +132,25 @@ async function handleLogout() {
   cursor: pointer;
   font-size: 14px;
   color: #606266;
+}
+
+.points-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  border-radius: 20px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.points-display:hover {
+  transform: scale(1.05);
 }
 
 .layout-main {

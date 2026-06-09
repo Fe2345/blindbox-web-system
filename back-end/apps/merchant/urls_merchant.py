@@ -9,7 +9,7 @@ from apps.merchant.views import (
     ProductListView, ProductDetailView, ProductImageUploadView,
     InventoryListView, InventoryUpdateView, InventoryRecordListView,
     ShipmentTaskListView, ShipmentTaskDetailView, ShipmentConfirmView,
-    RecordListView,
+    RecordListView, MerchantOrderListView,
 )
 
 urlpatterns = [
@@ -39,4 +39,6 @@ urlpatterns = [
     path("shipments/<int:pk>/ship", ShipmentConfirmView.as_view(), name="merchant-shipment-confirm"),
     # 记录
     path("records", RecordListView.as_view(), name="merchant-records"),
+    # 订单
+    path("orders", MerchantOrderListView.as_view(), name="merchant-order-list"),
 ]
