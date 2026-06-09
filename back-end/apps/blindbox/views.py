@@ -27,6 +27,8 @@ from .serializers import (
 
 logger = logging.getLogger("blindbox")
 
+RARITY_RANK = {"N": 1, "R": 2, "SR": 3, "SSR": 4}
+
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CSRFExemptView(APIView):
@@ -272,6 +274,15 @@ class AdminBlindBoxDetailView(CSRFExemptView):
         box.save()
         return success(data=AdminBlindBoxSerializer(box).data)
 
+    def delete(self, request, pk):
+        try:
+            box = BlindBox.objects.get(pk=pk)
+        except BlindBox.DoesNotExist:
+            return error(message="盲盒不存在", http_status=404)
+
+        box.delete()
+        return success(message="删除成功")
+
 
 class AdminBlindBoxStatusView(CSRFExemptView):
     permission_classes = [IsAdmin]
@@ -353,6 +364,14 @@ class AdminPrizePoolView(CSRFExemptView):
                         ip_name_snapshot=item.get("ip_name_snapshot", ""),
                         product_id=item.get("product_id"),
                     )
+
+            saved_prizes = list(box.prizes.filter(is_active=True).exclude(image=""))
+            if saved_prizes:
+                highest_rank = max(RARITY_RANK.get(prize.rarity, 0) for prize in saved_prizes)
+                cover_candidates = [prize.image for prize in saved_prizes if RARITY_RANK.get(prize.rarity, 0) == highest_rank]
+                if cover_candidates:
+                    box.cover = random.choice(cover_candidates)
+                    box.save(update_fields=["cover", "updated_at"])
 
         box.refresh_from_db()
         return success(data=AdminBlindBoxSerializer(box).data)

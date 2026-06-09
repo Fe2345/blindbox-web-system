@@ -126,7 +126,7 @@ class BlindBoxWriteSerializer(serializers.Serializer):
     """盲盒写入序列化器"""
 
     name = serializers.CharField(max_length=100)
-    cover = serializers.CharField(max_length=500)
+    cover = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
     description = serializers.CharField(required=False, allow_blank=True, default="")
     category = serializers.CharField(max_length=50)
     ip_name = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
