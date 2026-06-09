@@ -23,6 +23,7 @@ from django.utils import timezone  # noqa: E402
 
 from apps.assets.models import Asset  # noqa: E402
 from apps.blindbox.models import BlindBox, Prize  # noqa: E402
+from apps.blindbox.probabilities import calculate_prize_probabilities, probability_to_weight  # noqa: E402
 from apps.exchange.models import ExchangeApplication, ExchangePost  # noqa: E402
 from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product  # noqa: E402
 from apps.points.models import PointsAccount, PointsRecord, TransactionRecord  # noqa: E402
@@ -176,10 +177,8 @@ def create_blindboxes(products):
             allow_simulation=True,
             sort_order=index,
         )
-        base_probability = 100 // len(selected)
-        remainder = 100 - base_probability * len(selected)
-        for prize_index, product in enumerate(selected):
-            probability = base_probability + (1 if prize_index < remainder else 0)
+        calculated_probabilities = calculate_prize_probabilities(selected, cost)
+        for product, probability in zip(selected, calculated_probabilities):
             Prize.objects.create(
                 blindbox=box,
                 product=product,
@@ -187,7 +186,7 @@ def create_blindboxes(products):
                 image=product.image,
                 rarity=product.rarity,
                 probability=probability,
-                weight=max(probability, 1),
+                weight=probability_to_weight(probability),
                 quantity=35,
                 remaining_quantity=35,
                 is_active=True,

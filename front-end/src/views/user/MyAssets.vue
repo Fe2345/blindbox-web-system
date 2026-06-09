@@ -8,6 +8,29 @@
       </div>
     </div>
 
+    <div class="asset-summary">
+      <div class="summary-item primary">
+        <span>拥有资产估值</span>
+        <strong>{{ ownedEstimatedTotal }}</strong>
+        <small>积分</small>
+      </div>
+      <div class="summary-item">
+        <span>可回收返还</span>
+        <strong>{{ availableRecycleTotal }}</strong>
+        <small>积分</small>
+      </div>
+      <div class="summary-item muted">
+        <span>已回收价值</span>
+        <strong>{{ recycledEstimatedTotal }}</strong>
+        <small>积分</small>
+      </div>
+      <div class="summary-item compact">
+        <span>已选可返还</span>
+        <strong>{{ selectedRecycleTotal }}</strong>
+        <small>积分</small>
+      </div>
+    </div>
+
     <div class="filter-bar">
       <el-select v-model="filterStatus" placeholder="状态筛选" clearable style="width: 150px">
         <el-option label="可操作" value="available" />
@@ -78,7 +101,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="recycleMode === 'manual'" label="已选资产">
-          <span>{{ selectedIds.length }} 件</span>
+          <span>{{ selectedIds.length }} 件，预计返还 {{ selectedRecycleTotal }} 积分</span>
         </el-form-item>
         <el-form-item v-if="recycleMode === 'rarity'" label="稀有度">
           <el-checkbox-group v-model="selectedRarities">
@@ -153,6 +176,31 @@ const recycledAssets = computed(() => {
   return sortedAssets(filteredAssets.value.filter((asset) => asset.status === 'recycled'))
 })
 
+const ownedEstimatedTotal = computed(() => {
+  return assetStore.assets
+    .filter((asset) => asset.status !== 'recycled')
+    .reduce((sum, asset) => sum + (asset.estimatedPoints || 0), 0)
+})
+
+const availableRecycleTotal = computed(() => {
+  return assetStore.assets
+    .filter((asset) => asset.status === 'available')
+    .reduce((sum, asset) => sum + (asset.recyclablePoints || 0), 0)
+})
+
+const recycledEstimatedTotal = computed(() => {
+  return assetStore.assets
+    .filter((asset) => asset.status === 'recycled')
+    .reduce((sum, asset) => sum + (asset.estimatedPoints || 0), 0)
+})
+
+const selectedRecycleTotal = computed(() => {
+  const selected = new Set(selectedIds.value)
+  return assetStore.assets
+    .filter((asset) => selected.has(asset.id) && asset.status === 'available')
+    .reduce((sum, asset) => sum + (asset.recyclablePoints || 0), 0)
+})
+
 function sortedAssets(assets: Asset[]) {
   return [...assets].sort((a, b) => {
     const rarityDiff = (rarityRank[b.rarity] || 0) - (rarityRank[a.rarity] || 0)
@@ -206,7 +254,8 @@ async function runRecycle(payload: Parameters<typeof assetStore.bulkRecycle>[0])
     const res = await assetStore.bulkRecycle(payload)
     if (res.code === 200) {
       ElMessage.success(`回收成功，共 ${res.data.recycledCount} 件，获得 ${res.data.recycledPoints} 积分`)
-      selectedIds.value = selectedIds.value.filter((id) => !res.data.recycledAssetIds.includes(Number(id)))
+      const recycledIdSet = new Set(res.data.recycledAssetIds.map((id: number | string) => String(id)))
+      selectedIds.value = selectedIds.value.filter((id) => !recycledIdSet.has(String(id)))
       showBulkDialog.value = false
       await pointsStore.fetchBalance()
     } else {
@@ -249,6 +298,10 @@ const AssetCard = defineComponent({
         ]),
         h('div', { class: 'card-meta' }, `来源：${props.asset.sourceName}`),
         h('div', { class: 'card-meta' }, `获得时间：${formatDate(props.asset.obtainedAt)}`),
+        h('div', { class: 'card-values' }, [
+          h('span', {}, `估值 ${props.asset.estimatedPoints} 积分`),
+          h('strong', {}, `回收 ${props.asset.recyclablePoints} 积分`),
+        ]),
       ]),
       h('div', { class: 'card-actions' }, [
         h(ElTag, { type: assetStatusType(props.asset.status) as any, size: 'small' }, () => assetStatusLabel(props.asset.status)),
@@ -283,6 +336,53 @@ onMounted(() => assetStore.fetchAssets())
 .header-actions {
   display: flex;
   gap: 10px;
+}
+
+.asset-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 16px;
+}
+
+.summary-item {
+  min-height: 78px;
+  padding: 14px 16px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.summary-item span {
+  color: #909399;
+  font-size: 13px;
+}
+
+.summary-item strong {
+  margin-top: 4px;
+  color: #303133;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.summary-item small {
+  margin-top: 2px;
+  color: #909399;
+}
+
+.summary-item.primary strong {
+  color: #e6a23c;
+}
+
+.summary-item.muted {
+  background: #fafafa;
+}
+
+.summary-item.compact strong {
+  color: #67c23a;
 }
 
 .asset-section {
@@ -328,6 +428,22 @@ onMounted(() => assetStore.fetchAssets())
   position: relative;
 }
 
+.card-values {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ebeef5;
+  font-size: 12px;
+  color: #909399;
+}
+
+.card-values strong {
+  color: #67c23a;
+  font-weight: 600;
+}
+
 .asset-check {
   position: absolute;
   top: 8px;
@@ -348,5 +464,17 @@ onMounted(() => assetStore.fetchAssets())
 
 .is-recycled :deep(.card-image) {
   filter: grayscale(0.7);
+}
+
+@media (max-width: 900px) {
+  .asset-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .asset-summary {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

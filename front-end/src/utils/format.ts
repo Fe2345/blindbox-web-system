@@ -12,6 +12,10 @@ export function formatPoints(points: number): string {
   return points.toLocaleString()
 }
 
+export function formatProbability(probability: number): string {
+  return Number(probability).toFixed(2).replace(/\.?0+$/, '')
+}
+
 export function rarityLabel(rarity: string): string {
   const map: Record<string, string> = { N: '普通', R: '稀有', SR: '超稀有', SSR: '传说' }
   return map[rarity] || rarity
@@ -57,6 +61,7 @@ export function pointsTypeLabel(type: string): string {
   const map: Record<string, string> = {
     blindbox_consume: '盲盒消费',
     recycle_return: '回收返还',
+    recharge: '积分充值',
     system_adjust: '系统调整',
   }
   return map[type] || type
