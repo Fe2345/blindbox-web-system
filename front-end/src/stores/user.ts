@@ -25,11 +25,16 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function fetchUserInfo() {
-    const res: any = await userApi.getUserInfo()
-    if (res.code === 200) {
-      userInfo.value = res.data
+    try {
+      const res: any = await userApi.getUserInfo()
+      if (res.code === 200) {
+        userInfo.value = res.data
+      }
+      return res
+    } catch (e) {
+      console.error('[user] fetchUserInfo failed:', e)
+      return { code: -1, message: '获取用户信息失败' }
     }
-    return res
   }
 
   async function updateUserInfo(data: Partial<UserInfo>) {

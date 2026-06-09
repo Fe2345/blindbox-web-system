@@ -10,6 +10,7 @@ export interface ExchangePost {
   expectDescription: string
   remark: string
   status: 'published' | 'locked' | 'completed' | 'cancelled'
+  pendingCount: number
   createdAt: string
 }
 

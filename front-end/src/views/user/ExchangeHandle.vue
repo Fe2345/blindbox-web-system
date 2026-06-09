@@ -2,7 +2,8 @@
   <div class="page-container">
     <el-page-header @back="router.back()" title="返回" content="换物申请处理" />
 
-    <div v-if="applications.length" style="margin-top: 20px">
+    <div v-if="loading" v-loading="true" style="min-height: 200px; margin-top: 20px"></div>
+    <div v-else-if="applications.length" style="margin-top: 20px">
       <el-card v-for="app in applications" :key="app.id" style="margin-bottom: 16px">
         <div class="app-card">
           <div class="asset-side">
@@ -61,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExchangeStore } from '@/stores/exchange'
 import { ElMessage } from 'element-plus'
@@ -70,6 +71,7 @@ import { Switch } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const exchangeStore = useExchangeStore()
+const loading = ref(true)
 const applications = exchangeStore.applications
 
 async function handleAccept(id: string) {
@@ -84,7 +86,16 @@ async function handleReject(id: string) {
   else ElMessage.error(res.message)
 }
 
-onMounted(() => exchangeStore.fetchApplications())
+onMounted(async () => {
+  try {
+    const res = await exchangeStore.fetchApplications()
+    if (res.code !== 200) {
+      ElMessage.error(res.message || '获取换物申请失败')
+    }
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>

@@ -66,19 +66,15 @@ class ExchangeApplyView(CSRFExemptView):
                     return error(message="不能申请交换自己的帖子", http_status=400)
                 if post.status != ExchangePost.Status.PUBLISHED:
                     return error(message="当前换物帖不可申请", http_status=400)
-                if post.asset.status != Asset.Status.EXCHANGE_PUBLISHED:
-                    return error(message="发布方资产状态不可交换", http_status=400)
                 if applicant_asset.status != Asset.Status.AVAILABLE:
                     return error(message="申请方资产状态不可交换", http_status=400)
+                if ExchangeApplication.objects.filter(
+                    post=post, applicant=request.user, status=ExchangeApplication.Status.PENDING
+                ).exists():
+                    return error(message="您已对此帖子提交过申请，请等待处理", http_status=400)
 
                 applicant_asset.status = Asset.Status.EXCHANGE_LOCKED
                 applicant_asset.save(update_fields=["status"])
-
-                post.asset.status = Asset.Status.EXCHANGE_LOCKED
-                post.asset.save(update_fields=["status"])
-
-                post.status = ExchangePost.Status.LOCKED
-                post.save(update_fields=["status"])
 
                 application = ExchangeApplication.objects.create(
                     post=post,
@@ -148,7 +144,7 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
 
                 if application.status != ExchangeApplication.Status.PENDING:
                     return error(message="当前申请已处理", http_status=400)
-                if post.status not in [ExchangePost.Status.PUBLISHED, ExchangePost.Status.LOCKED]:
+                if post.status != ExchangePost.Status.PUBLISHED:
                     return error(message="当前换物帖不可处理", http_status=400)
 
                 publisher = post.user
@@ -167,12 +163,18 @@ class ExchangeApplicationAcceptView(CSRFExemptView):
                 post.status = ExchangePost.Status.COMPLETED
                 post.save(update_fields=["status"])
 
-                (
+                # 拒绝同帖子其他待处理申请，并解锁其申请人资产
+                other_apps = (
                     ExchangeApplication.objects
                     .filter(post=post, status=ExchangeApplication.Status.PENDING)
                     .exclude(pk=application.pk)
-                    .update(status=ExchangeApplication.Status.REJECTED)
                 )
+                other_applicant_ids = list(other_apps.values_list("applicant_asset_id", flat=True))
+                other_apps.update(status=ExchangeApplication.Status.REJECTED)
+                if other_applicant_ids:
+                    Asset.objects.filter(pk__in=other_applicant_ids).update(
+                        status=Asset.Status.AVAILABLE
+                    )
         except ExchangeApplication.DoesNotExist:
             return error(message="换物申请不存在", http_status=404)
         except Exception:
@@ -200,14 +202,6 @@ class ExchangeApplicationRejectView(CSRFExemptView):
                 applicant_asset = Asset.objects.select_for_update().get(pk=application.applicant_asset_id)
                 applicant_asset.status = Asset.Status.AVAILABLE
                 applicant_asset.save(update_fields=["status"])
-
-                post = application.post
-                post_asset = Asset.objects.select_for_update().get(pk=post.asset_id)
-                post_asset.status = Asset.Status.EXCHANGE_PUBLISHED
-                post_asset.save(update_fields=["status"])
-
-                post.status = ExchangePost.Status.PUBLISHED
-                post.save(update_fields=["status"])
 
                 application.status = ExchangeApplication.Status.REJECTED
                 application.save(update_fields=["status"])
