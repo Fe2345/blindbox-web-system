@@ -132,8 +132,8 @@ onMounted(() => {
   if (authStore.isLoggedIn) authStore.fetchInfo()
 })
 
-function handleLogout() {
-  authStore.logout()
+async function handleLogout() {
+  await authStore.logout()
   window.location.href = '/login'
 }
 </script>

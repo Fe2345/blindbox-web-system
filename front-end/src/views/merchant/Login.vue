@@ -55,21 +55,8 @@ async function handleLogin() {
   await formRef.value?.validate()
   loading.value = true
   try {
-    const res = await authStore.login(form.username, form.password, 'merchant')
+    const res = await authStore.login(form.username, form.password)
     if (res.code === 200) {
-      const role = res.data.merchant?.role ?? res.data.user?.role
-      if (role === 'user') {
-        ElMessage.error('该账号为普通用户，请前往用户端登录')
-        return
-      }
-      if (role === 'admin') {
-        ElMessage.error('该账号为管理员账号，请前往管理后台登录')
-        return
-      }
-      if (role && role !== 'merchant') {
-        ElMessage.error('该账号无权访问商家中心')
-        return
-      }
       ElMessage.success('登录成功')
       router.push('/')
     } else {

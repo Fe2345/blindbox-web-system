@@ -71,8 +71,8 @@ const activeMenu = computed(() => {
   return path
 })
 
-function handleLogout() {
-  userStore.logout()
+async function handleLogout() {
+  await userStore.logout()
   router.push('/login')
 }
 </script>

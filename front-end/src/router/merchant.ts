@@ -38,6 +38,10 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   if (to.meta.noAuth) {
+    if (to.path === '/login' && localStorage.getItem('merchant_logged_in') === 'true') {
+      next('/')
+      return
+    }
     next()
     return
   }

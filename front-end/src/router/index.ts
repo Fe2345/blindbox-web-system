@@ -45,6 +45,26 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const targetIsLogin = to.path === '/user/login' || to.path === '/login'
+
+  // 已登录管理员访问登录页 → 重定向到管理后台
+  if (targetIsLogin && localStorage.getItem('admin_logged_in') === 'true') {
+    window.location.href = '/admin.html#/'
+    return
+  }
+
+  // 已登录商家访问登录页 → 重定向到商家中心
+  if (targetIsLogin && localStorage.getItem('merchant_logged_in') === 'true') {
+    window.location.href = '/merchant.html#/'
+    return
+  }
+
+  // 已登录用户访问登录页 → 重定向到用户首页
+  if (isLoggedIn && targetIsLogin) {
+    next('/')
+    return
+  }
+
   if (!to.meta.noAuth && !isLoggedIn) {
     if (localStorage.getItem('admin_logged_in') === 'true') {
       next({ path: '/user/login', query: { msg: 'admin' } })

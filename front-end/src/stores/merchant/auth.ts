@@ -6,13 +6,9 @@ export const useMerchantAuthStore = defineStore('merchantAuth', () => {
   const merchantInfo = ref<any>(null)
   const isLoggedIn = ref(localStorage.getItem('merchant_logged_in') === 'true')
 
-  async function login(username: string, password: string, expectedRole?: string) {
+  async function login(username: string, password: string) {
     const res: any = await authApi.merchantLogin({ username, password })
     if (res.code === 200) {
-      const role = res.data.merchant?.role ?? res.data.user?.role
-      if (expectedRole && role !== expectedRole) {
-        return res
-      }
       merchantInfo.value = res.data.merchant
       isLoggedIn.value = true
       localStorage.setItem('merchant_logged_in', 'true')

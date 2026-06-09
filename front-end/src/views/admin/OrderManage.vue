@@ -20,40 +20,18 @@
       <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.status === 'pending' ? 'warning' : row.status === 'shipped' ? 'primary' : 'success'" size="small">{{ orderStatusLabel(row.status) }}</el-tag></template></el-table-column>
       <el-table-column label="收货地址"><template #default="{ row }">{{ row.address.fullAddress }}</template></el-table-column>
       <el-table-column label="物流"><template #default="{ row }">{{ row.logistics ? `${row.logistics.company} ${row.logistics.trackingNo}` : '-' }}</template></el-table-column>
-      <el-table-column label="操作" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-button v-if="row.status === 'pending'" type="primary" size="small" @click="showShipDialog(row)">发货</el-button>
-        </template>
-      </el-table-column>
     </el-table>
-
-    <el-dialog v-model="shipDialogVisible" title="填写物流信息" width="450px">
-      <el-form :model="shipForm" label-width="80px">
-        <el-form-item label="订单号"><el-input :model-value="shipTarget?.orderNo" disabled /></el-form-item>
-        <el-form-item label="物流公司"><el-input v-model="shipForm.company" placeholder="如：顺丰速运" /></el-form-item>
-        <el-form-item label="运单号"><el-input v-model="shipForm.trackingNo" placeholder="请输入运单号" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="shipDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="shipping" @click="handleShip">确认发货</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '@/stores/admin/order'
-import { ElMessage } from 'element-plus'
 import { orderStatusLabel } from '@/utils/format'
 
 const orderStore = useOrderStore()
 const filterStatus = ref('')
 const filterType = ref('')
-const shipDialogVisible = ref(false)
-const shipTarget = ref<any>(null)
-const shipForm = ref({ company: '', trackingNo: '' })
-const shipping = ref(false)
 
 const filteredOrders = computed(() => {
   return orderStore.list.filter((o) => {
@@ -62,18 +40,6 @@ const filteredOrders = computed(() => {
     return true
   })
 })
-
-function showShipDialog(row: any) { shipTarget.value = row; shipForm.value = { company: '', trackingNo: '' }; shipDialogVisible.value = true }
-
-async function handleShip() {
-  if (!shipForm.value.company || !shipForm.value.trackingNo) { ElMessage.warning('请填写完整物流信息'); return }
-  shipping.value = true
-  try {
-    const res = await orderStore.ship(shipTarget.value.id, shipForm.value.company, shipForm.value.trackingNo)
-    if (res.code === 200) { ElMessage.success('发货成功'); shipDialogVisible.value = false }
-    else ElMessage.error(res.message)
-  } finally { shipping.value = false }
-}
 
 onMounted(() => orderStore.fetchList())
 </script>
