@@ -8,13 +8,17 @@ export const useUserStore = defineStore('user', () => {
   const addresses = ref<Address[]>([])
   const isLoggedIn = ref(localStorage.getItem('isLoggedIn') === 'true')
 
-  async function login(username: string, password: string) {
+  async function login(username: string, password: string, expectedRole?: string) {
     const res: any = await userApi.login({ username, password })
     if (res.code === 200) {
+      const role = res.data.user?.role
+      if (expectedRole && role !== expectedRole) {
+        return res
+      }
       userInfo.value = res.data.user
       isLoggedIn.value = true
       localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('user_role', res.data.user.role)
+      localStorage.setItem('user_role', role)
     }
     return res
   }

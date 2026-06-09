@@ -24,7 +24,6 @@
           <div class="card-actions">
             <el-button type="primary" @click="go('/admin.html#/login')">管理员登录</el-button>
           </div>
-          <small>测试账号：admin_p3 / 123456</small>
         </article>
 
         <article class="portal-card merchant">
@@ -35,7 +34,6 @@
             <el-button type="primary" @click="go('/merchant.html#/login')">商家登录</el-button>
             <el-button plain @click="go('/merchant.html#/register')">注册商家</el-button>
           </div>
-          <small>测试账号：merchant_p3 / 123456</small>
         </article>
       </div>
     </section>
@@ -130,11 +128,6 @@ function go(path: string) {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: auto;
-}
-
-.portal-card small {
-  margin-top: 14px;
-  color: #909399;
 }
 
 @media (max-width: 860px) {
