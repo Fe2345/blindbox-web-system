@@ -1,6 +1,7 @@
 import logging
 import random
 import uuid
+from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
@@ -10,8 +11,10 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import IsAdmin, IsAuthenticated
 from apps.common.response import error, flatten_errors, success
+from apps.common.valuation import resolve_estimated_points, resolve_recyclable_points
 
 from .models import BlindBox, DrawRecord, Prize
+from .probabilities import calculate_prize_probabilities, probability_to_weight
 from .serializers import (
     AdminBlindBoxSerializer,
     BlindBoxSerializer,
@@ -23,6 +26,8 @@ from .serializers import (
 )
 
 logger = logging.getLogger("blindbox")
+
+RARITY_RANK = {"N": 1, "R": 2, "SR": 3, "SSR": 4}
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -124,7 +129,8 @@ class DrawView(CSRFExemptView):
                     prize.remaining_quantity -= 1
                     prize.save(update_fields=["remaining_quantity"])
 
-                    estimated_points = prize.product.estimated_points if prize.product_id else 0
+                    estimated_points = resolve_estimated_points(prize, box.cost_points)
+                    recyclable_points = resolve_recyclable_points(prize, box.cost_points)
                     asset = Asset.objects.create(
                         user=user,
                         product=prize.product,
@@ -137,7 +143,7 @@ class DrawView(CSRFExemptView):
                         source_name=box.name,
                         obtained_at=now,
                         estimated_points=estimated_points,
-                        recyclable_points=max(estimated_points // 2, 1) if estimated_points > 0 else 0,
+                        recyclable_points=recyclable_points,
                     )
 
                     records.append(DrawRecord.objects.create(
@@ -187,11 +193,11 @@ class DrawView(CSRFExemptView):
         total = sum(p.probability for p in prizes)
         if total <= 0:
             return None
-        rand = random.randint(1, total)
-        cumulative = 0
+        rand = Decimal(str(random.random())) * Decimal(total)
+        cumulative = Decimal("0")
         for prize in prizes:
             cumulative += prize.probability
-            if rand <= cumulative:
+            if rand < cumulative:
                 return prize
         return prizes[-1] if prizes else None
 
@@ -268,6 +274,15 @@ class AdminBlindBoxDetailView(CSRFExemptView):
         box.save()
         return success(data=AdminBlindBoxSerializer(box).data)
 
+    def delete(self, request, pk):
+        try:
+            box = BlindBox.objects.get(pk=pk)
+        except BlindBox.DoesNotExist:
+            return error(message="盲盒不存在", http_status=404)
+
+        box.delete()
+        return success(message="删除成功")
+
 
 class AdminBlindBoxStatusView(CSRFExemptView):
     permission_classes = [IsAdmin]
@@ -307,15 +322,16 @@ class AdminPrizePoolView(CSRFExemptView):
                 return error(message=flatten_errors(serializer.errors), http_status=400)
             validated.append(serializer.validated_data)
 
-        total_prob = sum(item["probability"] for item in validated)
-        if total_prob != 100:
-            return error(message=f"概率合计必须为100%，当前为{total_prob}%", http_status=400)
+        try:
+            calculated_probabilities = calculate_prize_probabilities(validated, box.cost_points)
+        except ValueError as exc:
+            return error(message=str(exc), http_status=400)
 
         with transaction.atomic():
             existing_ids = {item.get("id") for item in validated if item.get("id")}
             box.prizes.exclude(pk__in=existing_ids).delete()
 
-            for item in validated:
+            for item, calculated_probability in zip(validated, calculated_probabilities):
                 prize_id = item.get("id")
                 if prize_id:
                     try:
@@ -325,8 +341,8 @@ class AdminPrizePoolView(CSRFExemptView):
                     prize.name = item["name"]
                     prize.image = item["image"]
                     prize.rarity = item["rarity"]
-                    prize.probability = item["probability"]
-                    prize.weight = item.get("weight", 0)
+                    prize.probability = calculated_probability
+                    prize.weight = probability_to_weight(calculated_probability)
                     prize.quantity = item.get("quantity", 0)
                     prize.remaining_quantity = item.get("remaining_quantity", 0)
                     prize.is_active = item.get("is_active", True)
@@ -340,14 +356,22 @@ class AdminPrizePoolView(CSRFExemptView):
                         name=item["name"],
                         image=item["image"],
                         rarity=item["rarity"],
-                        probability=item["probability"],
-                        weight=item.get("weight", 0),
+                        probability=calculated_probability,
+                        weight=probability_to_weight(calculated_probability),
                         quantity=item.get("quantity", 0),
                         remaining_quantity=item.get("remaining_quantity", 0),
                         is_active=item.get("is_active", True),
                         ip_name_snapshot=item.get("ip_name_snapshot", ""),
                         product_id=item.get("product_id"),
                     )
+
+            saved_prizes = list(box.prizes.filter(is_active=True).exclude(image=""))
+            if saved_prizes:
+                highest_rank = max(RARITY_RANK.get(prize.rarity, 0) for prize in saved_prizes)
+                cover_candidates = [prize.image for prize in saved_prizes if RARITY_RANK.get(prize.rarity, 0) == highest_rank]
+                if cover_candidates:
+                    box.cover = random.choice(cover_candidates)
+                    box.save(update_fields=["cover", "updated_at"])
 
         box.refresh_from_db()
         return success(data=AdminBlindBoxSerializer(box).data)

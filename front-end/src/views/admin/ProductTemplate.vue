@@ -35,6 +35,7 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑商品' : '新增商品'" width="500px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="商品名称"><el-input v-model="form.name" /></el-form-item>
+        <el-form-item label="图片地址"><el-input v-model="form.image" placeholder="/media/product/xxx.png" /></el-form-item>
         <el-form-item label="分类">
           <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
             <el-option label="动漫IP" value="动漫IP" />
@@ -73,14 +74,14 @@ const productStore = useProductStore()
 const filterStatus = ref('')
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ id: '', name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 })
+const form = ref({ id: '', name: '', image: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 })
 
 const filteredProducts = computed(() => {
   if (!filterStatus.value) return productStore.list
   return productStore.list.filter((p) => p.status === filterStatus.value)
 })
 
-function showAdd() { isEdit.value = false; form.value = { id: '', name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { id: '', name: '', image: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row }; dialogVisible.value = true }
 async function handleSave() {
   if (!form.value.name || !form.value.category) {

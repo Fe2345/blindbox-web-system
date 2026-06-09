@@ -63,9 +63,18 @@
                 </template>
               </el-table-column>
               <el-table-column label="概率" width="80">
-                <template #default="{ row }">{{ row.probability }}%</template>
+                <template #default="{ row }">{{ formatProbability(row.probability) }}%</template>
+              </el-table-column>
+              <el-table-column label="估值" width="82">
+                <template #default="{ row }">{{ row.estimatedPoints || 0 }} 积分</template>
+              </el-table-column>
+              <el-table-column label="回收" width="82">
+                <template #default="{ row }">{{ row.recyclablePoints || 0 }} 积分</template>
               </el-table-column>
             </el-table>
+            <div class="probability-note">
+              概率按长期资产估值期望计算；同稀有度商品尽量保持一致，实际抽取会排除库存为 0 的商品。
+            </div>
           </el-card>
 
           <el-card style="margin-top: 16px">
@@ -130,7 +139,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useBlindBoxStore } from '@/stores/blindbox'
 import { usePointsStore } from '@/stores/points'
 import { ElMessage } from 'element-plus'
-import { rarityLabel, rarityColor } from '@/utils/format'
+import { rarityLabel, rarityColor, formatProbability } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -276,5 +285,12 @@ async function handleDraw(count: number) {
   margin-top: 8px;
   color: #f56c6c;
   font-size: 13px;
+}
+
+.probability-note {
+  margin-top: 10px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
 }
 </style>
