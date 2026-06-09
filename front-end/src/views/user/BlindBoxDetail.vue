@@ -26,7 +26,11 @@
                   <span>单次消耗：</span>
                   <strong style="color: #e6a23c">{{ box.costPoints }} 积分</strong>
                 </div>
-                <div class="info-row"><span>剩余库存：</span>{{ remainingStock }}</div>
+                <div class="info-row">
+                  <span>库存状态：</span>
+                  <el-tag v-if="isOutOfStock" type="danger">待补货</el-tag>
+                  <el-tag v-else type="success">可抽取</el-tag>
+                </div>
               </div>
             </div>
           </el-card>
@@ -42,7 +46,6 @@
                 <el-tag :color="rarityColor(prize.rarity)" style="color: #fff; border: none" size="small">
                   {{ rarityLabel(prize.rarity) }}
                 </el-tag>
-                <div class="prize-stock">库存：{{ prize.remainingQuantity }}</div>
               </div>
             </div>
           </el-card>
@@ -73,7 +76,7 @@
               </el-table-column>
             </el-table>
             <div class="probability-note">
-              概率按长期资产估值期望计算；稀有度越高总概率越低，同稀有度内估值越高概率越低，实际抽取会排除库存为 0 的商品。
+              概率按长期资产估值期望计算；稀有度越高总概率越低，同稀有度内估值越高概率越低。
             </div>
           </el-card>
 
@@ -123,7 +126,7 @@
               <div v-if="pointsStore.balance < box.costPoints" class="warn-tip">积分不足，无法抽取</div>
               <div v-else-if="pointsStore.balance < box.costPoints * 5" class="warn-tip">积分不足，无法五连抽</div>
               <div v-else-if="pointsStore.balance < box.costPoints * 10" class="warn-tip">积分不足，无法十连抽</div>
-              <div v-if="remainingStock <= 0" class="warn-tip">库存不足</div>
+              <div v-if="isOutOfStock" class="warn-tip">库存不足，请等待商家补货</div>
               <div v-if="box.status === 'ended'" class="warn-tip">活动已结束</div>
             </div>
           </el-card>
@@ -149,10 +152,12 @@ const drawingCount = ref(0)
 const loading = ref(false)
 
 const box = computed(() => blindBoxStore.currentBox)
-const remainingStock = computed(() => (box.value?.prizes || []).reduce((sum, prize) => sum + (prize.remainingQuantity || 0), 0))
+const isOutOfStock = computed(() => {
+  return (box.value?.prizes || []).every((p: any) => p.availableForShipping <= 0)
+})
 function canDraw(count: number) {
   if (!box.value) return false
-  return box.value.status !== 'ended' && remainingStock.value >= count && pointsStore.balance >= box.value.costPoints * count
+  return box.value.status !== 'ended' && !isOutOfStock.value && pointsStore.balance >= box.value.costPoints * count
 }
 
 async function loadDetail(id: string) {

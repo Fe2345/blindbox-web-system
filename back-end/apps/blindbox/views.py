@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 
-from apps.common.permissions import IsAdmin, IsAuthenticated
+from apps.common.permissions import IsAdmin, IsAuthenticated, IsMerchant
 from apps.common.response import error, flatten_errors, success
 from apps.common.valuation import resolve_estimated_points, resolve_recyclable_points
 
@@ -96,10 +96,10 @@ class DrawView(CSRFExemptView):
         if account.balance < total_cost:
             return error(message="积分不足", http_status=400)
 
-        active_prizes = box.prizes.filter(is_active=True, remaining_quantity__gt=0)
+        active_prizes = box.prizes.filter(is_active=True, available_for_shipping__gt=0)
         if not active_prizes.exists():
-            return error(message="奖品已抽完", http_status=400)
-        if sum(p.remaining_quantity for p in active_prizes) < draw_count:
+            return error(message="奖品库存不足，请等待商家补货", http_status=400)
+        if sum(p.available_for_shipping for p in active_prizes) < draw_count:
             return error(message="奖品库存不足，无法完成本次连抽", http_status=400)
 
         batch_no = f"B{timezone.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6].upper()}"
@@ -120,14 +120,16 @@ class DrawView(CSRFExemptView):
                     available_prizes = list(
                         Prize.objects
                         .select_for_update()
-                        .filter(blindbox=box, is_active=True, remaining_quantity__gt=0)
+                        .filter(blindbox=box, is_active=True, available_for_shipping__gt=0)
                     )
                     prize = self._pick_prize(available_prizes)
                     if prize is None:
                         raise ValueError("抽奖失败，请重试")
 
-                    prize.remaining_quantity -= 1
-                    prize.save(update_fields=["remaining_quantity"])
+                    # 扣减可发货数量，增加待发货数量
+                    prize.available_for_shipping -= 1
+                    prize.pending_shipment_count += 1
+                    prize.save(update_fields=["available_for_shipping", "pending_shipment_count"])
 
                     estimated_points = resolve_estimated_points(prize, box.cost_points)
                     recyclable_points = resolve_recyclable_points(prize, box.cost_points)
@@ -159,7 +161,7 @@ class DrawView(CSRFExemptView):
                         remaining_points=account.balance,
                         batch_no=batch_no,
                         draw_type=DrawRecord.DrawType.REAL,
-                        draw_status=DrawRecord.DrawStatus.SUCCESS,
+                        draw_status=DrawRecord.DrawStatus.PENDING_SHIPMENT,
                     ))
 
                 PointsRecord.objects.create(
@@ -389,3 +391,139 @@ class AdminDrawRecordListView(CSRFExemptView):
         if draw_type:
             qs = qs.filter(draw_type=draw_type)
         return success(data=DrawRecordSerializer(qs[:50], many=True).data)
+
+
+class MerchantPrizeStockView(CSRFExemptView):
+    """商家查看奖池库存"""
+    permission_classes = [IsMerchant]
+
+    def get(self, request):
+        merchant = request.user.merchant
+        # 获取商家关联的商品
+        from apps.merchant.models import Product
+        merchant_products = Product.objects.filter(merchant=merchant).values_list("id", flat=True)
+
+        # 获取这些商品在奖池中的库存
+        prizes = Prize.objects.filter(
+            product_id__in=merchant_products,
+            is_active=True
+        ).select_related("blindbox", "product")
+
+        data = []
+        for prize in prizes:
+            data.append({
+                "id": prize.id,
+                "name": prize.name,
+                "image": prize.image,
+                "rarity": prize.rarity,
+                "blindboxId": prize.blindbox.id,
+                "blindboxName": prize.blindbox.name,
+                "productId": prize.product.id if prize.product else None,
+                "productName": prize.product.name if prize.product else None,
+                "remainingQuantity": prize.remaining_quantity,
+                "availableForShipping": prize.available_for_shipping,
+                "pendingShipmentCount": prize.pending_shipment_count,
+            })
+
+        return success(data=data)
+
+
+class MerchantPrizeReplenishView(CSRFExemptView):
+    """商家补充奖池库存"""
+    permission_classes = [IsMerchant]
+
+    def post(self, request, prize_id):
+        merchant = request.user.merchant
+        quantity = request.data.get("quantity")
+
+        if not quantity or int(quantity) <= 0:
+            return error(message="补充数量必须大于0", http_status=400)
+
+        try:
+            prize = Prize.objects.select_related("product").get(pk=prize_id)
+        except Prize.DoesNotExist:
+            return error(message="奖品不存在", http_status=404)
+
+        # 验证商家拥有该商品
+        if not prize.product or prize.product.merchant_id != merchant.id:
+            return error(message="无权操作此奖品", http_status=403)
+
+        # 补充库存
+        prize.available_for_shipping += int(quantity)
+        prize.save(update_fields=["available_for_shipping", "updated_at"])
+
+        return success(message=f"已补充 {quantity} 个库存")
+
+
+class MerchantShipmentOrderView(CSRFExemptView):
+    """商家查看待发货订单"""
+    permission_classes = [IsMerchant]
+
+    def get(self, request):
+        merchant = request.user.merchant
+        # 获取商家关联的商品
+        from apps.merchant.models import Product
+        merchant_products = Product.objects.filter(merchant=merchant).values_list("id", flat=True)
+
+        # 获取待发货的抽奖记录
+        records = DrawRecord.objects.filter(
+            prize__product_id__in=merchant_products,
+            draw_status=DrawRecord.DrawStatus.PENDING_SHIPMENT
+        ).select_related("user", "blindbox", "prize", "asset").order_by("-created_at")
+
+        data = []
+        for record in records:
+            data.append({
+                "id": record.id,
+                "userId": record.user.id,
+                "username": record.user.username,
+                "prizeId": record.prize.id,
+                "prizeName": record.prize_name,
+                "prizeImage": record.prize_image,
+                "rarity": record.rarity,
+                "blindboxName": record.blindbox.name,
+                "batchNo": record.batch_no,
+                "createdAt": record.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            })
+
+        return success(data=data)
+
+
+class MerchantShipView(CSRFExemptView):
+    """商家确认发货"""
+    permission_classes = [IsMerchant]
+
+    def post(self, request, record_id):
+        merchant = request.user.merchant
+
+        try:
+            record = DrawRecord.objects.select_related("prize__product", "asset").get(pk=record_id)
+        except DrawRecord.DoesNotExist:
+            return error(message="订单不存在", http_status=404)
+
+        # 验证商家拥有该商品
+        if not record.prize.product or record.prize.product.merchant_id != merchant.id:
+            return error(message="无权操作此订单", http_status=403)
+
+        # 验证订单状态
+        if record.draw_status != DrawRecord.DrawStatus.PENDING_SHIPMENT:
+            return error(message="订单状态不正确", http_status=400)
+
+        with transaction.atomic():
+            # 更新订单状态
+            record.draw_status = DrawRecord.DrawStatus.SHIPPED
+            record.save(update_fields=["draw_status", "updated_at"])
+
+            # 减少待发货数量
+            prize = Prize.objects.select_for_update().get(pk=record.prize.pk)
+            prize.pending_shipment_count -= 1
+            prize.save(update_fields=["pending_shipment_count", "updated_at"])
+
+            # 更新资产状态
+            if record.asset:
+                from apps.assets.models import Asset
+                asset = Asset.objects.get(pk=record.asset.pk)
+                asset.status = Asset.Status.AVAILABLE
+                asset.save(update_fields=["status", "updated_at"])
+
+        return success(message="发货成功")
