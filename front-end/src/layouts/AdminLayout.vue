@@ -138,7 +138,7 @@ const currentTitle = computed(() => menuTitleMap[route.path] || '')
 
 function handleLogout() {
   authStore.logout()
-  router.push('/login')
+  window.location.href = '/login'
 }
 </script>
 

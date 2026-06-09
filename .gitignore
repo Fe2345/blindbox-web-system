@@ -22,3 +22,4 @@ dist-ssr
 *.sw?
 *.pyc
 .env
+scripts/Web_export_*.sql

@@ -63,7 +63,7 @@ class Prize(BaseModel):
     name = models.CharField(max_length=100, verbose_name="奖品名称")
     image = models.CharField(max_length=500, verbose_name="奖品图片")
     rarity = models.CharField(max_length=10, choices=Rarity.choices, verbose_name="稀有度")
-    probability = models.PositiveIntegerField(verbose_name="概率(%)")  # 0-100，兼容前端
+    probability = models.DecimalField(max_digits=7, decimal_places=4, verbose_name="概率(%)")
     weight = models.PositiveIntegerField(default=0, verbose_name="抽取权重")
     quantity = models.PositiveIntegerField(default=0, verbose_name="奖品总数量")
     remaining_quantity = models.PositiveIntegerField(default=0, verbose_name="奖品剩余数量")

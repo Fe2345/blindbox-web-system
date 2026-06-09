@@ -26,6 +26,8 @@ export interface BlindBoxPrize {
   remainingQuantity: number
   isActive: boolean
   ipNameSnapshot: string
+  estimatedPoints?: number
+  recyclablePoints?: number
 }
 
 export interface DrawResult {
@@ -85,4 +87,6 @@ export interface AdminPrize {
   remainingQuantity: number
   isActive: boolean
   ipNameSnapshot: string
+  estimatedPoints?: number
+  recyclablePoints?: number
 }

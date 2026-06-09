@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.common.permissions import IsAdmin, IsMerchant
 from apps.common.response import success, error, flatten_errors
+from apps.common.valuation import estimate_points_for_rarity
 from apps.accounts.models import User
 from apps.merchant.models import Inventory, InventoryRecord, Merchant, Product, ShipmentTask
 from apps.merchant.serializers import (
@@ -33,7 +34,7 @@ class CSRFExemptView(APIView):
     pass
 
 
-class MerchantRegisterView(APIView):
+class MerchantRegisterView(CSRFExemptView):
     """商家注册 — POST /merchant/api/register"""
 
     authentication_classes = []
@@ -61,7 +62,7 @@ class MerchantRegisterView(APIView):
         return success(None, "注册成功")
 
 
-class MerchantLoginView(APIView):
+class MerchantLoginView(CSRFExemptView):
     """商家登录 — POST /merchant/api/login"""
 
     authentication_classes = []
@@ -583,7 +584,7 @@ class AdminProductListView(CSRFExemptView):
             category=d["category"],
             rarity=d["rarity"],
             description=d.get("description", ""),
-            estimated_points=d.get("estimated_points", 0),
+            estimated_points=d.get("estimated_points", 0) or estimate_points_for_rarity(d["rarity"], 100),
             status="approved",
         )
         Inventory.objects.create(product=product, current_stock=d.get("stock", 0))

@@ -3,6 +3,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/login',
+    name: 'AuthPortal',
+    component: () => import('@/views/AuthPortal.vue'),
+    meta: { noAuth: true },
+  },
+  {
+    path: '/user/login',
     name: 'Login',
     component: () => import('@/views/user/Login.vue'),
     meta: { noAuth: true },

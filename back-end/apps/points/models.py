@@ -28,6 +28,7 @@ class PointsRecord(BaseModel):
         BLINDBOX_CONSUME = "blindbox_consume", "盲盒消耗"
         RECYCLE_RETURN = "recycle_return", "回收返还"
         SYSTEM_ADJUST = "system_adjust", "系统调整"
+        RECHARGE = "recharge", "充值"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

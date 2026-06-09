@@ -235,14 +235,21 @@ class AdminProductSerializer(serializers.ModelSerializer):
     """商品列表序列化器（管理端）"""
 
     merchantName = serializers.CharField(source="merchant.name", read_only=True)
+    stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             "id", "name", "image", "category", "rarity", "description",
             "estimated_points", "status", "review_note",
-            "merchantName", "created_at",
+            "merchantName", "stock", "created_at",
         ]
+
+    def get_stock(self, obj):
+        try:
+            return obj.inventory.current_stock
+        except Inventory.DoesNotExist:
+            return 0
 
     def to_representation(self, instance):
         return keys_to_camel(super().to_representation(instance))
