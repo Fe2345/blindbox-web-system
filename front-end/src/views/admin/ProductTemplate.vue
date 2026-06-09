@@ -35,7 +35,16 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑商品' : '新增商品'" width="500px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="商品名称"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
+            <el-option label="动漫IP" value="动漫IP" />
+            <el-option label="潮玩" value="潮玩" />
+            <el-option label="数码" value="数码" />
+            <el-option label="生活" value="生活" />
+            <el-option label="美妆" value="美妆" />
+            <el-option label="食品" value="食品" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="稀有度">
           <el-select v-model="form.rarity" style="width: 100%">
             <el-option label="普通(N)" value="N" /><el-option label="稀有(R)" value="R" />

@@ -256,3 +256,33 @@ class AdminProductReviewSerializer(serializers.Serializer):
 
     def to_internal_value(self, data):
         return super().to_internal_value(keys_to_snake(data))
+
+
+class AdminProductWriteSerializer(serializers.Serializer):
+    """商品新增序列化器（管理端）"""
+
+    name = serializers.CharField(max_length=100)
+    image = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    category = serializers.CharField(max_length=50)
+    rarity = serializers.ChoiceField(choices=["N", "R", "SR", "SSR"])
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+    stock = serializers.IntegerField(min_value=0, default=0)
+    estimated_points = serializers.IntegerField(min_value=0, default=0)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
+
+
+class AdminProductUpdateSerializer(serializers.Serializer):
+    """商品编辑序列化器（管理端）"""
+
+    name = serializers.CharField(max_length=100, required=False)
+    image = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    category = serializers.CharField(max_length=50, required=False)
+    rarity = serializers.ChoiceField(choices=["N", "R", "SR", "SSR"], required=False)
+    description = serializers.CharField(required=False, allow_blank=True)
+    stock = serializers.IntegerField(min_value=0, required=False)
+    estimated_points = serializers.IntegerField(min_value=0, required=False)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(keys_to_snake(data))
