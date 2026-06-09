@@ -32,7 +32,17 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑盲盒' : '新增盲盒'" width="550px">
       <el-form :model="form" label-width="90px">
         <el-form-item label="盲盒名称"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="封面"><el-input v-model="form.cover" placeholder="封面图片URL" /></el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
+            <el-option label="动漫IP" value="动漫IP" />
+            <el-option label="潮玩" value="潮玩" />
+            <el-option label="数码" value="数码" />
+            <el-option label="生活" value="生活" />
+            <el-option label="美妆" value="美妆" />
+            <el-option label="食品" value="食品" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="描述"><el-input v-model="form.description" type="textarea" /></el-form-item>
         <el-form-item label="消耗积分"><el-input-number v-model="form.costPoints" :min="1" /></el-form-item>
         <el-form-item label="最大抽取次数"><el-input-number v-model="form.maxDrawCount" :min="1" /></el-form-item>
@@ -40,7 +50,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">保存</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -54,10 +64,32 @@ import { ElMessage } from 'element-plus'
 const blindBoxStore = useBlindBoxStore()
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
+const form = ref({ id: '', name: '', cover: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null })
 
-function showAdd() { isEdit.value = false; form.value = { name: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { id: '', name: '', cover: '', category: '', description: '', costPoints: 100, maxDrawCount: 10, dateRange: null }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row, dateRange: null }; dialogVisible.value = true }
+async function handleSave() {
+  if (!form.value.name || !form.value.category) {
+    ElMessage.warning('请填写盲盒名称和分类')
+    return
+  }
+  const payload = {
+    ...form.value,
+    startTime: form.value.dateRange?.[0] || null,
+    endTime: form.value.dateRange?.[1] || null,
+  }
+  delete payload.dateRange
+  let res
+  if (isEdit.value) {
+    res = await blindBoxStore.update(form.value.id, payload)
+  } else {
+    res = await blindBoxStore.save(payload)
+  }
+  if (res.code === 200) {
+    ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
+    dialogVisible.value = false
+  }
+}
 
 async function handleToggle(id: string, status: string) {
   const res = await blindBoxStore.updateStatus(id, status)

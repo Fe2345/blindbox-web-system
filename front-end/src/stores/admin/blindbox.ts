@@ -24,5 +24,17 @@ export const useBlindBoxStore = defineStore('blindbox', () => {
     return res
   }
 
-  return { list, fetchList, updateStatus, savePrizePool }
+  async function save(data: any) {
+    const res: any = await api.saveBlindBox(data)
+    if (res.code === 200) await fetchList()
+    return res
+  }
+
+  async function update(id: string, data: any) {
+    const res: any = await api.updateBlindBox(id, data)
+    if (res.code === 200) await fetchList()
+    return res
+  }
+
+  return { list, fetchList, save, update, updateStatus, savePrizePool }
 })

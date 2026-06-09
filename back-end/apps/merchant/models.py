@@ -62,6 +62,8 @@ class Product(BaseModel):
         on_delete=models.CASCADE,
         related_name="products",
         verbose_name="所属商家",
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=100, verbose_name="商品名称")
     image = models.CharField(max_length=500, verbose_name="商品图片")

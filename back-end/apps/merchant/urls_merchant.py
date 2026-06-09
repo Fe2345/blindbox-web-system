@@ -1,8 +1,9 @@
 from django.urls import path
 
+from apps.accounts.views import CookieTokenRefreshView
 from apps.merchant.views import (
     MerchantRegisterView,
-    MerchantLoginView, MerchantInfoView,
+    MerchantLoginView, MerchantLogoutView, MerchantInfoView,
     MerchantApplicationView,
     MerchantDashboardView,
     ProductListView, ProductDetailView, ProductImageUploadView,
@@ -15,6 +16,8 @@ urlpatterns = [
     # 认证
     path("register", MerchantRegisterView.as_view(), name="merchant-register"),
     path("login", MerchantLoginView.as_view(), name="merchant-login"),
+    path("logout", MerchantLogoutView.as_view(), name="merchant-logout"),
+    path("token/refresh", CookieTokenRefreshView.as_view(), name="merchant-token-refresh"),
     path("info", MerchantInfoView.as_view(), name="merchant-info"),
     # 入驻申请（GET 查状态 / POST 提交）
     path("application", MerchantApplicationView.as_view(), name="merchant-application"),

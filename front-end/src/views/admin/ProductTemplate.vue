@@ -35,7 +35,16 @@
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑商品' : '新增商品'" width="500px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="商品名称"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
+        <el-form-item label="分类">
+          <el-select v-model="form.category" placeholder="请选择分类" style="width: 100%">
+            <el-option label="动漫IP" value="动漫IP" />
+            <el-option label="潮玩" value="潮玩" />
+            <el-option label="数码" value="数码" />
+            <el-option label="生活" value="生活" />
+            <el-option label="美妆" value="美妆" />
+            <el-option label="食品" value="食品" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="稀有度">
           <el-select v-model="form.rarity" style="width: 100%">
             <el-option label="普通(N)" value="N" /><el-option label="稀有(R)" value="R" />
@@ -48,7 +57,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">保存</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -64,15 +73,31 @@ const productStore = useProductStore()
 const filterStatus = ref('')
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const form = ref({ name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 })
+const form = ref({ id: '', name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 })
 
 const filteredProducts = computed(() => {
   if (!filterStatus.value) return productStore.list
   return productStore.list.filter((p) => p.status === filterStatus.value)
 })
 
-function showAdd() { isEdit.value = false; form.value = { name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 }; dialogVisible.value = true }
+function showAdd() { isEdit.value = false; form.value = { id: '', name: '', category: '', rarity: 'N', description: '', stock: 0, estimatedPoints: 0 }; dialogVisible.value = true }
 function showEdit(row: any) { isEdit.value = true; form.value = { ...row }; dialogVisible.value = true }
+async function handleSave() {
+  if (!form.value.name || !form.value.category) {
+    ElMessage.warning('请填写商品名称和分类')
+    return
+  }
+  let res
+  if (isEdit.value) {
+    res = await productStore.update(form.value.id, form.value)
+  } else {
+    res = await productStore.save(form.value)
+  }
+  if (res.code === 200) {
+    ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
+    dialogVisible.value = false
+  }
+}
 async function handleOffline(id: string) {
   const res = await productStore.offline(id)
   if (res.code === 200) ElMessage.success('已下架')
