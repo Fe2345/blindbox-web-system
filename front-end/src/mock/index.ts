@@ -241,10 +241,10 @@ export function setupMock() {
   mock.onGet('/admin/api/users').reply(() => [200, { code: 200, data: mockAdminUsers, message: 'ok' }])
   mock.onPut(/\/admin\/api\/users\/.*\/status/).reply((config) => {
     const id = config.url?.split('/')[4]
-    const { status } = JSON.parse(config.data)
+    const { isActive } = JSON.parse(config.data)
     const u = mockAdminUsers.find((x) => x.id === id)
-    if (u) u.status = status
-    return [200, { code: 200, data: null, message: '修改成功' }]
+    if (u) u.isActive = isActive
+    return [200, { code: 200, data: u, message: '修改成功' }]
   })
 
   // Products

@@ -6,9 +6,13 @@ export const useAuthStore = defineStore('auth', () => {
   const adminInfo = ref<any>(null)
   const isLoggedIn = ref(localStorage.getItem('admin_logged_in') === 'true')
 
-  async function login(username: string, password: string) {
+  async function login(username: string, password: string, expectedRole?: string) {
     const res: any = await authApi.adminLogin({ username, password })
     if (res.code === 200) {
+      const role = res.data.user?.role
+      if (expectedRole && role !== expectedRole) {
+        return res
+      }
       adminInfo.value = res.data.user
       isLoggedIn.value = true
       localStorage.setItem('admin_logged_in', 'true')

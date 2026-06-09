@@ -22,16 +22,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/admin/auth'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
+
+onMounted(() => {
+  if (route.query.msg === 'merchant') {
+    ElMessage.warning('请前往商家中心登录')
+  } else if (route.query.msg === 'user') {
+    ElMessage.warning('请前往用户端登录')
+  }
+})
 
 const form = reactive({ username: '', password: '' })
 const rules = {
@@ -43,8 +52,21 @@ async function handleLogin() {
   await formRef.value?.validate()
   loading.value = true
   try {
-    const res = await authStore.login(form.username, form.password)
+    const res = await authStore.login(form.username, form.password, 'admin')
     if (res.code === 200) {
+      const role = res.data.user?.role
+      if (role === 'user') {
+        ElMessage.error('该账号为普通用户，请前往用户端登录')
+        return
+      }
+      if (role === 'merchant') {
+        ElMessage.error('该账号为商家账号，请前往商家中心登录')
+        return
+      }
+      if (role && role !== 'admin') {
+        ElMessage.error('该账号无权访问管理后台')
+        return
+      }
       ElMessage.success('登录成功')
       router.push('/')
     } else {
@@ -89,5 +111,4 @@ async function handleLogin() {
 }
 .login-tabs .tab:hover { color: #409eff; background: #ecf5ff; }
 .login-tabs .tab.active { color: #fff; background: #001529; font-weight: 600; }
-.login-tip { text-align: center; margin-top: 12px; color: #909399; font-size: 13px; }
 </style>
