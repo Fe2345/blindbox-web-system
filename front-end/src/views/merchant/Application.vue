@@ -9,7 +9,12 @@
     </el-card>
 
     <el-card v-if="applicationLoaded && existingApp && existingApp.status !== 'rejected'">
-      <template #header><span>审核状态</span></template>
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span>审核状态</span>
+          <el-button v-if="existingApp.status === 'pending'" type="primary" size="small" @click="openFormWithData">修改申请</el-button>
+        </div>
+      </template>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="商家名称">{{ existingApp.merchantName }}</el-descriptions-item>
         <el-descriptions-item label="审核状态">
@@ -27,7 +32,7 @@
     <el-card v-if="applicationLoaded && existingApp?.status === 'rejected'" style="margin-top: 16px">
       <template #header><span>驳回原因</span></template>
       <el-alert :title="existingApp.reviewNote" type="error" show-icon :closable="false" />
-      <el-button type="primary" style="margin-top: 16px" @click="showForm = true">重新提交申请</el-button>
+      <el-button type="primary" style="margin-top: 16px" @click="openFormWithData">重新提交申请</el-button>
     </el-card>
 
     <el-card v-if="applicationLoaded && (!existingApp || showForm)" style="margin-top: 16px">
@@ -120,6 +125,17 @@ async function handleSubmit() {
   } finally {
     loading.value = false
   }
+}
+
+function openFormWithData() {
+  if (existingApp.value) {
+    form.merchantName = existingApp.value.merchantName
+    form.contactName = existingApp.value.contactName
+    form.phone = existingApp.value.phone
+    form.businessScope = existingApp.value.businessScope
+    form.supplyDescription = existingApp.value.supplyDescription
+  }
+  showForm.value = true
 }
 
 function resetForm() {
