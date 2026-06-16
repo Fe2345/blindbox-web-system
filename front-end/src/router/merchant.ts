@@ -26,6 +26,7 @@ const routes = [
       { path: 'inventory', name: 'MerchantInventory', component: () => import('@/views/merchant/InventoryManage.vue') },
       { path: 'shipments', name: 'MerchantShipments', component: () => import('@/views/merchant/ShipmentTasks.vue') },
       { path: 'orders', name: 'MerchantOrders', component: () => import('@/views/merchant/OrderManage.vue') },
+      { path: 'prize-stock', name: 'MerchantPrizeStock', component: () => import('@/views/merchant/PrizeStockManage.vue') },
       { path: 'records', name: 'MerchantRecords', component: () => import('@/views/merchant/RecordQuery.vue') },
     ],
   },

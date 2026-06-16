@@ -96,7 +96,7 @@
         </el-table-column>
         <el-table-column label="库存" width="112">
           <template #default="{ row }">
-            <el-input-number v-model="row.remainingQuantity" :min="0" size="small" style="width: 92px" />
+            <el-input-number :model-value="row.remainingQuantity" disabled size="small" style="width: 92px" />
           </template>
         </el-table-column>
         <el-table-column label="概率" width="82">

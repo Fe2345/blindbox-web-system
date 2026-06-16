@@ -67,6 +67,16 @@ class Prize(BaseModel):
     weight = models.PositiveIntegerField(default=0, verbose_name="抽取权重")
     quantity = models.PositiveIntegerField(default=0, verbose_name="奖品总数量")
     remaining_quantity = models.PositiveIntegerField(default=0, verbose_name="奖品剩余数量")
+    available_for_shipping = models.PositiveIntegerField(
+        default=0,
+        verbose_name="可发货数量",
+        help_text="商家实际可发货的库存数量"
+    )
+    pending_shipment_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="待发货数量",
+        help_text="已抽奖但未发货的数量"
+    )
     is_active = models.BooleanField(default=True, verbose_name="是否参与抽取")
     ip_name_snapshot = models.CharField(max_length=100, blank=True, default="", verbose_name="奖品IP快照")
 
@@ -87,6 +97,8 @@ class DrawRecord(BaseModel):
     class DrawStatus(models.TextChoices):
         SUCCESS = "success", "成功"
         FAILED = "failed", "失败"
+        PENDING_SHIPMENT = "pending_shipment", "待发货"
+        SHIPPED = "shipped", "已发货"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

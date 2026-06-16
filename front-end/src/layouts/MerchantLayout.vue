@@ -38,6 +38,11 @@
           <span>库存管理</span>
         </el-menu-item>
 
+        <el-menu-item index="/prize-stock">
+          <el-icon><Present /></el-icon>
+          <span>奖池库存</span>
+        </el-menu-item>
+
         <el-menu-item index="/shipments">
           <el-icon><Van /></el-icon>
           <span>发货管理</span>
@@ -94,7 +99,7 @@ import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMerchantAuthStore } from '@/stores/merchant/auth'
 import {
-  DataBoard, Document, Goods, Box, Van, Notebook,
+  DataBoard, Document, Goods, Box, Van, Notebook, Present,
   UserFilled, ArrowDown, List,
 } from '@element-plus/icons-vue'
 
@@ -120,6 +125,7 @@ const menuTitleMap: Record<string, string> = {
   '/products': '商品列表',
   '/products/submit': '商品提交',
   '/inventory': '库存管理',
+  '/prize-stock': '奖池库存',
   '/shipments': '发货管理',
   '/orders': '订单管理',
   '/records': '记录查询',

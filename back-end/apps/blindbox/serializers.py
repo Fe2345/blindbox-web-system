@@ -20,6 +20,7 @@ class PrizeSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "image", "rarity",
             "probability", "weight", "quantity", "remaining_quantity",
+            "available_for_shipping", "pending_shipment_count",
             "is_active", "ip_name_snapshot",
             "estimated_points", "recyclable_points",
         ]
