@@ -718,3 +718,51 @@ class MerchantOrderListView(APIView):
             qs = qs.filter(status=status_filter)
 
         return success(MerchantOrderSerializer(qs[:100], many=True).data)
+
+
+class MerchantOrderShipView(APIView):
+    """商家订单发货 — POST /merchant/api/orders/<pk>/ship"""
+
+    permission_classes = [IsAuthenticated, IsMerchant]
+
+    def post(self, request, pk):
+        from apps.orders.models import Order
+        from apps.assets.models import Asset
+        from apps.merchant.models import ShipmentTask
+
+        merchant = get_object_or_404(Merchant, user=request.user)
+        order = get_object_or_404(Order, pk=pk, asset__product__merchant=merchant)
+
+        if order.status != Order.Status.PENDING:
+            return error("当前订单状态不可发货", status.HTTP_200_OK)
+
+        logistics_company = request.data.get("logisticsCompany", "").strip()
+        tracking_no = request.data.get("trackingNo", "").strip()
+        if not logistics_company or not tracking_no:
+            return error("请填写完整的物流信息", status.HTTP_200_OK)
+
+        with transaction.atomic():
+            # 更新订单状态
+            order.logistics_company = logistics_company
+            order.tracking_no = tracking_no
+            order.shipped_at = timezone.now()
+            order.status = Order.Status.SHIPPED
+            order.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
+
+            # 更新资产状态
+            if order.asset:
+                order.asset.status = Asset.Status.SHIPPED
+                order.asset.save(update_fields=["status"])
+
+            # 更新发货任务状态
+            shipment = ShipmentTask.objects.filter(
+                order_no=order.order_no, status=ShipmentTask.Status.PENDING
+            ).first()
+            if shipment:
+                shipment.logistics_company = logistics_company
+                shipment.tracking_no = tracking_no
+                shipment.shipped_at = timezone.now()
+                shipment.status = ShipmentTask.Status.SHIPPED
+                shipment.save(update_fields=["logistics_company", "tracking_no", "shipped_at", "status"])
+
+        return success(None, "发货成功")

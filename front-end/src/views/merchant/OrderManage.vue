@@ -40,8 +40,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="下单时间" width="110" />
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
+            <el-button v-if="row.status === 'pending'" type="primary" size="small" @click="showShipDialog(row)">发货</el-button>
             <el-button link type="primary" size="small" @click="viewDetail(row)">详情</el-button>
           </template>
         </el-table-column>
@@ -70,12 +71,31 @@
         </template>
       </el-descriptions>
     </el-dialog>
+
+    <el-dialog v-model="shipDialogVisible" title="填写物流信息" width="450px">
+      <el-form :model="shipForm" label-width="80px">
+        <el-form-item label="订单号">
+          <el-input :model-value="shipTarget?.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="物流公司">
+          <el-input v-model="shipForm.company" placeholder="如：顺丰速运" />
+        </el-form-item>
+        <el-form-item label="运单号">
+          <el-input v-model="shipForm.trackingNo" placeholder="请输入运单号" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="shipDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="shipping" @click="handleShip">确认发货</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useMerchantOrderStore } from '@/stores/merchant/order'
+import { ElMessage } from 'element-plus'
 import type { MerchantOrder } from '@/types/merchant-self'
 
 const orderStore = useMerchantOrderStore()
@@ -84,6 +104,10 @@ const statusFilter = ref('')
 const detailVisible = ref(false)
 const currentOrder = ref<MerchantOrder | null>(null)
 const orderList = ref<MerchantOrder[]>([])
+const shipDialogVisible = ref(false)
+const shipTarget = ref<MerchantOrder | null>(null)
+const shipForm = ref({ company: '', trackingNo: '' })
+const shipping = ref(false)
 
 function statusLabel(status: string) {
   const map: Record<string, string> = { pending: '待发货', shipped: '已发货', completed: '已确认收货' }
@@ -98,6 +122,32 @@ function statusTagType(status: string) {
 function viewDetail(order: MerchantOrder) {
   currentOrder.value = order
   detailVisible.value = true
+}
+
+function showShipDialog(order: MerchantOrder) {
+  shipTarget.value = order
+  shipForm.value = { company: '', trackingNo: '' }
+  shipDialogVisible.value = true
+}
+
+async function handleShip() {
+  if (!shipForm.value.company || !shipForm.value.trackingNo) {
+    ElMessage.warning('请填写完整物流信息')
+    return
+  }
+  shipping.value = true
+  try {
+    const res = await orderStore.ship(shipTarget.value!.id, shipForm.value.company, shipForm.value.trackingNo)
+    if (res.code === 200) {
+      ElMessage.success('发货成功')
+      shipDialogVisible.value = false
+      loadData()
+    } else {
+      ElMessage.error(res.message)
+    }
+  } finally {
+    shipping.value = false
+  }
 }
 
 async function loadData() {
