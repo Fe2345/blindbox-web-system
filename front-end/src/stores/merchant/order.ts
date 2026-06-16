@@ -12,5 +12,10 @@ export const useMerchantOrderStore = defineStore('merchantOrder', () => {
     return res
   }
 
-  return { list, fetchList }
+  async function ship(id: number, logisticsCompany: string, trackingNo: string) {
+    const res: any = await orderApi.shipOrder(id, { logisticsCompany, trackingNo })
+    return res
+  }
+
+  return { list, fetchList, ship }
 })
